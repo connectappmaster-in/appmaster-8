@@ -96,7 +96,7 @@ export default function ServiceRequests() {
                     </SelectContent>
                   </Select>
 
-                  <Button size="sm" onClick={() => navigate('/helpdesk/service-requests')} className="gap-1.5 h-8">
+                  <Button size="sm" onClick={() => navigate('/helpdesk/service-requests/request-form')} className="gap-1.5 h-8">
                     <Plus className="h-3.5 w-3.5" />
                     <span className="text-sm">New Request</span>
                   </Button>
@@ -130,7 +130,7 @@ export default function ServiceRequests() {
                 <p className="text-xs text-muted-foreground mb-4 text-center max-w-md">
                   Get started by creating your first service request
                 </p>
-                <Button onClick={() => navigate('/helpdesk/service-requests')} size="sm" className="gap-1.5 h-8">
+                <Button onClick={() => navigate('/helpdesk/service-requests/request-form')} size="sm" className="gap-1.5 h-8">
                   <Plus className="h-3.5 w-3.5" />
                   <span className="text-sm">Create First Request</span>
                 </Button>
