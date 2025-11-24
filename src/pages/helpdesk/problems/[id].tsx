@@ -4,18 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Link, Trash2 } from "lucide-react";
+import { Loader2, ArrowLeft, Link, Trash2, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { EditProblemDialog } from "@/components/helpdesk/EditProblemDialog";
 
 export default function HelpdeskProblemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedTicketId, setSelectedTicketId] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const { data: problem, isLoading } = useQuery({
     queryKey: ["helpdesk-problem", id],
@@ -175,9 +177,9 @@ export default function HelpdeskProblemDetail() {
           <Button variant="outline" size="sm" onClick={() => navigate("/helpdesk/problems")}>
             All Problems
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+          <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
           </Button>
         </div>
       </div>
@@ -342,6 +344,14 @@ export default function HelpdeskProblemDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {problem && (
+        <EditProblemDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          problem={problem}
+        />
+      )}
     </div>
   );
 }
