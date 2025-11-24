@@ -27,9 +27,9 @@ export const ServiceRequestDetailsView = ({ request, onClose }: ServiceRequestDe
   return (
     <div className="bg-background border rounded-lg animate-fade-in overflow-hidden">
       {/* Compact Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold">{request.request_number}</h3>
+      <div className="flex items-center justify-between px-4 py-2.5 bg-muted/30 border-b">
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-base font-semibold">{request.request_number}</h3>
           <Badge className={statusColors[request.status] || ""} variant="secondary">
             {request.status}
           </Badge>
@@ -43,23 +43,27 @@ export const ServiceRequestDetailsView = ({ request, onClose }: ServiceRequestDe
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         {/* Title */}
         <div>
-          <h4 className="font-medium text-base">{request.title}</h4>
+          <h4 className="font-semibold text-base mb-3">{request.title}</h4>
         </div>
 
         {/* Metadata Grid */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Created</span>
-            <span className="font-medium">
+        <div className="grid grid-cols-3 gap-4 text-sm py-2">
+          <div>
+            <span className="text-muted-foreground text-xs">Created</span>
+            <p className="font-medium mt-0.5">
               {format(new Date(request.created_at), "MMM d, yyyy 'at' h:mm a")}
-            </span>
+            </p>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Requester</span>
-            <span className="font-medium truncate ml-2">{request.requester_id || "Unknown"}</span>
+          <div>
+            <span className="text-muted-foreground text-xs">Requester</span>
+            <p className="font-medium mt-0.5 truncate">{request.requester_id || "Unknown"}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground text-xs">Status</span>
+            <p className="font-medium mt-0.5 capitalize">{request.status}</p>
           </div>
         </div>
 
@@ -68,7 +72,7 @@ export const ServiceRequestDetailsView = ({ request, onClose }: ServiceRequestDe
         {/* Description */}
         <div>
           <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Description</h5>
-          <p className="text-sm">{request.description || "No description provided"}</p>
+          <p className="text-sm leading-relaxed">{request.description || "No description provided"}</p>
         </div>
 
         {request.additional_notes && (
@@ -76,13 +80,15 @@ export const ServiceRequestDetailsView = ({ request, onClose }: ServiceRequestDe
             <Separator />
             <div>
               <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Additional Notes</h5>
-              <p className="text-sm">{request.additional_notes}</p>
+              <p className="text-sm leading-relaxed">{request.additional_notes}</p>
             </div>
           </>
         )}
 
+        <Separator />
+
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-1">
           <Button variant="outline" size="sm" className="flex-1">
             Add Comment
           </Button>
