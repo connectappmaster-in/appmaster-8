@@ -250,9 +250,10 @@ export default function TicketsModule() {
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="investigating">Investigating</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="known_error">Known Error</SelectItem>
                     </SelectContent>
                   </Select>
 
