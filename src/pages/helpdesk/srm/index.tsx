@@ -1,24 +1,58 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Settings, Calendar, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Plus, FileText, Calendar, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Eye, Edit, MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { InlineServiceRequestForm } from "@/components/SRM/InlineServiceRequestForm";
+import { InlineChangeRequestForm } from "@/components/SRM/InlineChangeRequestForm";
+import { ServiceRequestDetailsView } from "@/components/SRM/ServiceRequestDetailsView";
+import { ChangeRequestDetailsView } from "@/components/SRM/ChangeRequestDetailsView";
+
+type ViewMode = 'list' | 'form' | 'details';
 
 export default function ServiceRequests() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("requests");
   const [filters, setFilters] = useState<Record<string, any>>({});
+  
+  // View state for Service Requests
+  const [requestViewMode, setRequestViewMode] = useState<ViewMode>('list');
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  
+  // View state for Change Management
+  const [changeViewMode, setChangeViewMode] = useState<ViewMode>('list');
+  const [selectedChange, setSelectedChange] = useState<any>(null);
 
   // Mock data for now (will be replaced with actual database queries)
-  const requests: any[] = [];
-  const changes: any[] = [];
+  const [requests, setRequests] = useState<any[]>([]);
+  const [changes, setChanges] = useState<any[]>([]);
   const isLoading = false;
+
+  const handleRequestSuccess = (newRequest: any) => {
+    setRequests(prev => [newRequest, ...prev]);
+    setSelectedRequest(newRequest);
+    setRequestViewMode('details');
+  };
+
+  const handleChangeSuccess = (newChange: any) => {
+    setChanges(prev => [newChange, ...prev]);
+    setSelectedChange(newChange);
+    setChangeViewMode('details');
+  };
+
+  const handleRequestClose = () => {
+    setRequestViewMode('list');
+    setSelectedRequest(null);
+  };
+
+  const handleChangeClose = () => {
+    setChangeViewMode('list');
+    setSelectedChange(null);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +126,11 @@ export default function ServiceRequests() {
                     </SelectContent>
                   </Select>
 
-                  <Button size="sm" onClick={() => navigate('/helpdesk/service-requests/request-form')} className="gap-1.5 h-8">
+                  <Button 
+                    size="sm" 
+                    onClick={() => setRequestViewMode('form')} 
+                    className="gap-1.5 h-8"
+                  >
                     <Plus className="h-3.5 w-3.5" />
                     <span className="text-sm">New Request</span>
                   </Button>
@@ -101,7 +139,11 @@ export default function ServiceRequests() {
             )}
 
             {activeTab === 'changes' && (
-              <Button size="sm" onClick={() => navigate('/helpdesk/service-requests/change-management')} className="gap-1.5 h-8 ml-auto">
+              <Button 
+                size="sm" 
+                onClick={() => setChangeViewMode('form')} 
+                className="gap-1.5 h-8 ml-auto"
+              >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="text-sm">New Change</span>
               </Button>
@@ -110,28 +152,44 @@ export default function ServiceRequests() {
 
           {/* Service Requests Tab */}
           <TabsContent value="requests" className="space-y-2 mt-2">
-            {isLoading ? (
+            {requestViewMode === 'form' && (
+              <InlineServiceRequestForm
+                onSuccess={handleRequestSuccess}
+                onCancel={() => setRequestViewMode('list')}
+              />
+            )}
+
+            {requestViewMode === 'details' && selectedRequest && (
+              <ServiceRequestDetailsView
+                request={selectedRequest}
+                onClose={handleRequestClose}
+              />
+            )}
+
+            {requestViewMode === 'list' && (
+              <>
+                {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center space-y-2">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   <p className="text-sm text-muted-foreground">Loading requests...</p>
                 </div>
               </div>
-            ) : requests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 border border-dashed rounded-lg">
-                <div className="rounded-full bg-muted p-4 mb-3">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-base font-semibold mb-1">No service requests found</h3>
-                <p className="text-xs text-muted-foreground mb-4 text-center max-w-md">
-                  Get started by creating your first service request
-                </p>
-                <Button onClick={() => navigate('/helpdesk/service-requests/request-form')} size="sm" className="gap-1.5 h-8">
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="text-sm">Create First Request</span>
-                </Button>
-              </div>
-            ) : (
+                ) : requests.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 border border-dashed rounded-lg">
+                    <div className="rounded-full bg-muted p-4 mb-3">
+                      <FileText className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-base font-semibold mb-1">No service requests found</h3>
+                    <p className="text-xs text-muted-foreground mb-4 text-center max-w-md">
+                      Get started by creating your first service request
+                    </p>
+                    <Button onClick={() => setRequestViewMode('form')} size="sm" className="gap-1.5 h-8">
+                      <Plus className="h-3.5 w-3.5" />
+                      <span className="text-sm">Create First Request</span>
+                    </Button>
+                  </div>
+                ) : (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -194,25 +252,43 @@ export default function ServiceRequests() {
                 </Table>
               </div>
             )}
-          </TabsContent>
+          </>
+        )}
+      </TabsContent>
 
-          {/* Change Management Tab */}
-          <TabsContent value="changes" className="space-y-2 mt-2">
-            {changes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 border border-dashed rounded-lg">
-                <div className="rounded-full bg-muted p-4 mb-3">
-                  <Calendar className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-base font-semibold mb-1">No change requests found</h3>
-                <p className="text-xs text-muted-foreground mb-4 text-center max-w-md">
-                  Get started by creating your first change request
-                </p>
-                <Button onClick={() => navigate('/helpdesk/service-requests/change-management')} size="sm" className="gap-1.5 h-8">
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="text-sm">Create First Change</span>
-                </Button>
-              </div>
-            ) : (
+      {/* Change Management Tab */}
+      <TabsContent value="changes" className="space-y-2 mt-2">
+            {changeViewMode === 'form' && (
+              <InlineChangeRequestForm
+                onSuccess={handleChangeSuccess}
+                onCancel={() => setChangeViewMode('list')}
+              />
+            )}
+
+            {changeViewMode === 'details' && selectedChange && (
+              <ChangeRequestDetailsView
+                change={selectedChange}
+                onClose={handleChangeClose}
+              />
+            )}
+
+            {changeViewMode === 'list' && (
+              <>
+                {changes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 border border-dashed rounded-lg">
+                    <div className="rounded-full bg-muted p-4 mb-3">
+                      <Calendar className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-base font-semibold mb-1">No change requests found</h3>
+                    <p className="text-xs text-muted-foreground mb-4 text-center max-w-md">
+                      Get started by creating your first change request
+                    </p>
+                    <Button onClick={() => setChangeViewMode('form')} size="sm" className="gap-1.5 h-8">
+                      <Plus className="h-3.5 w-3.5" />
+                      <span className="text-sm">Create First Change</span>
+                    </Button>
+                  </div>
+                ) : (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -275,9 +351,10 @@ export default function ServiceRequests() {
                 </Table>
               </div>
             )}
-          </TabsContent>
-
-        </Tabs>
+          </>
+        )}
+      </TabsContent>
+    </Tabs>
       </div>
     </div>
   );
