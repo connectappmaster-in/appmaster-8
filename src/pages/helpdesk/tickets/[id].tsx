@@ -14,6 +14,16 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { EditTicketDialog } from "@/components/helpdesk/EditTicketDialog";
 import { AssignTicketDialog } from "@/components/helpdesk/AssignTicketDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function TicketDetail() {
   const { id: ticketId } = useParams();
@@ -24,6 +34,7 @@ export default function TicketDetail() {
   const [newStatus, setNewStatus] = useState("");
   const [editDialog, setEditDialog] = useState(false);
   const [assignDialog, setAssignDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Open edit or assign dialog based on URL params
   useEffect(() => {
@@ -313,6 +324,26 @@ export default function TicketDetail() {
     },
   });
 
+  const deleteTicket = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("helpdesk_tickets")
+        .delete()
+        .eq("id", parseInt(ticketId!));
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ticket deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["helpdesk-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["helpdesk-tickets-all"] });
+      queryClient.invalidateQueries({ queryKey: ["helpdesk-dashboard-stats"] });
+      navigate("/helpdesk/tickets");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete ticket: " + error.message);
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -399,6 +430,15 @@ export default function TicketDetail() {
             >
               <Edit className="h-3.5 w-3.5 mr-1.5" />
               Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+              className="h-8"
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+              Delete
             </Button>
           </div>
         </div>
@@ -749,6 +789,27 @@ export default function TicketDetail() {
         onOpenChange={setAssignDialog}
         ticket={ticket}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ticket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the ticket
+              "{ticket.title}" and all its comments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTicket.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteTicket.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
