@@ -58,6 +58,7 @@ export default function RequestForm() {
         .from("srm_requests")
         .insert({
           request_number: requestNumber,
+          title: catalogItem?.name || "Service Request",
           catalog_item_id: parseInt(catalogId || "0"),
           requester_id: userData?.id,
           description: data.description || "",

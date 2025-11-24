@@ -130,11 +130,12 @@ export const CreateAdHocRequestDialog = ({
 
       const { error } = await supabase.from("srm_requests").insert({
         request_number: requestNumber,
+        title: data.title,
+        description: data.description,
         catalog_item_id: catalogItemId,
         requester_id: userData.userId,
         organisation_id: userData.organisationId,
         tenant_id: userData.tenantId,
-        additional_notes: `${data.title}\n\n${data.description}`,
         priority: data.priority,
         status: "pending",
       });

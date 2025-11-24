@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, Calendar, Search } from "lucide-react";
@@ -27,19 +29,57 @@ export default function ServiceRequests() {
   const [changeViewMode, setChangeViewMode] = useState<ViewMode>('list');
   const [selectedChange, setSelectedChange] = useState<any>(null);
 
-  // Mock data for now (will be replaced with actual database queries)
-  const [requests, setRequests] = useState<any[]>([]);
-  const [changes, setChanges] = useState<any[]>([]);
-  const isLoading = false;
+  // Fetch Service Requests from database
+  const { data: requests = [], isLoading: requestsLoading, refetch: refetchRequests } = useQuery({
+    queryKey: ["srm-requests", filters],
+    queryFn: async () => {
+      let query = supabase
+        .from("srm_requests")
+        .select("*")
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false });
+
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq("status", filters.status);
+      }
+      if (filters.priority && filters.priority !== 'all') {
+        query = query.eq("priority", filters.priority);
+      }
+      if (filters.search) {
+        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,request_number.ilike.%${filters.search}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch Change Requests from database
+  const { data: changes = [], isLoading: changesLoading, refetch: refetchChanges } = useQuery({
+    queryKey: ["change-requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("change_requests")
+        .select("*")
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const isLoading = requestsLoading || changesLoading;
 
   const handleRequestSuccess = (newRequest: any) => {
-    setRequests(prev => [newRequest, ...prev]);
+    refetchRequests();
     setSelectedRequest(newRequest);
     setRequestViewMode('details');
   };
 
   const handleChangeSuccess = (newChange: any) => {
-    setChanges(prev => [newChange, ...prev]);
+    refetchChanges();
     setSelectedChange(newChange);
     setChangeViewMode('details');
   };
@@ -47,11 +87,13 @@ export default function ServiceRequests() {
   const handleRequestClose = () => {
     setRequestViewMode('list');
     setSelectedRequest(null);
+    refetchRequests();
   };
 
   const handleChangeClose = () => {
     setChangeViewMode('list');
     setSelectedChange(null);
+    refetchChanges();
   };
 
   return (

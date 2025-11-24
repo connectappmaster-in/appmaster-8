@@ -105,7 +105,7 @@ export default function MyRequests() {
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span>Created {format(new Date(request.created_at), "MMM d, yyyy")}</span>
                     </div>
-                    {request.assignee_id && (
+                    {request.assigned_to && (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span>Assigned</span>

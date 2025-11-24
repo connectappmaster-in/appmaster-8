@@ -43,9 +43,7 @@ export default function RequestDetail() {
         .from("srm_requests")
         .select(`
           *,
-          catalog_item:srm_catalog(*),
-          requester:users!srm_requests_requester_id_fkey(name, email),
-          assignee:users!srm_requests_assignee_id_fkey(name, email)
+          catalog_item:srm_catalog(*)
         `)
         .eq("id", parseInt(requestId!))
         .single();
@@ -58,9 +56,9 @@ export default function RequestDetail() {
   const { data: comments = [] } = useQuery({
     queryKey: ["srm-comments", requestId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("srm_request_comments")
-        .select("*, user:users(name, email)")
+      const { data, error} = await supabase
+        .from("srm_comments")
+        .select("*")
         .eq("request_id", parseInt(requestId!))
         .order("created_at", { ascending: false });
 
@@ -69,20 +67,8 @@ export default function RequestDetail() {
     },
   });
 
-  const { data: approvals = [] } = useQuery({
-    queryKey: ["srm-approvals", requestId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("srm_approvals")
-        .select("*, approver:users(name, email)")
-        .eq("request_id", parseInt(requestId!))
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: request?.approval_required || false,
-  });
+  // Remove approvals query since approval_required field doesn't exist
+  const approvals: any[] = [];
 
   const addComment = useMutation({
     mutationFn: async (commentText: string) => {
@@ -229,8 +215,8 @@ export default function RequestDetail() {
               </CardContent>
             </Card>
 
-            {/* Approvals */}
-            {request.approval_required && approvals.length > 0 && (
+            {/* Approvals - Only show if there are approvals */}
+            {approvals.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Approvals</CardTitle>
@@ -359,15 +345,13 @@ export default function RequestDetail() {
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Requester</p>
-                  <p className="text-sm font-medium">{request.requester?.name}</p>
-                  <p className="text-xs text-muted-foreground">{request.requester?.email}</p>
+                  <p className="text-sm font-medium">{request.requester_id}</p>
                 </div>
 
-                {request.assignee && (
+                {request.assigned_to && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Assignee</p>
-                    <p className="text-sm font-medium">{request.assignee.name}</p>
-                    <p className="text-xs text-muted-foreground">{request.assignee.email}</p>
+                    <p className="text-sm font-medium">{request.assigned_to}</p>
                   </div>
                 )}
 
@@ -380,20 +364,20 @@ export default function RequestDetail() {
                   </p>
                 </div>
 
-                {request.completed_at && (
+                {request.fulfilled_at && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Completed</p>
+                    <p className="text-sm text-muted-foreground mb-1">Fulfilled</p>
                     <p className="text-sm">
-                      {format(new Date(request.completed_at), "MMM d, yyyy HH:mm")}
+                      {format(new Date(request.fulfilled_at), "MMM d, yyyy HH:mm")}
                     </p>
                   </div>
                 )}
 
-                {request.catalog_item?.estimated_delivery_days && (
+                {request.catalog_item?.estimated_fulfillment_time && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Estimated Delivery</p>
+                    <p className="text-sm text-muted-foreground mb-1">Estimated Fulfillment</p>
                     <p className="text-sm">
-                      {request.catalog_item.estimated_delivery_days} days
+                      {request.catalog_item.estimated_fulfillment_time}
                     </p>
                   </div>
                 )}
