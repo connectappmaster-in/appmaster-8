@@ -11,6 +11,16 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { EditProblemDialog } from "@/components/helpdesk/EditProblemDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function HelpdeskProblemDetail() {
   const { id } = useParams();
@@ -18,6 +28,7 @@ export default function HelpdeskProblemDetail() {
   const queryClient = useQueryClient();
   const [selectedTicketId, setSelectedTicketId] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: problem, isLoading } = useQuery({
     queryKey: ["helpdesk-problem", id],
@@ -117,6 +128,24 @@ export default function HelpdeskProblemDetail() {
     },
   });
 
+  const deleteProblem = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("helpdesk_problems")
+        .delete()
+        .eq("id", Number(id));
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Problem deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["helpdesk-problems"] });
+      navigate("/helpdesk/problems");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete problem: " + error.message);
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -180,6 +209,14 @@ export default function HelpdeskProblemDetail() {
           <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
           </Button>
         </div>
       </div>
@@ -352,6 +389,27 @@ export default function HelpdeskProblemDetail() {
           problem={problem}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Problem?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the problem
+              "{problem?.title}" and all its linked tickets.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteProblem.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteProblem.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
