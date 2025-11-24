@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Calendar, User, AlertCircle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { X } from "lucide-react";
 import { format } from "date-fns";
 
 interface ServiceRequestDetailsViewProps {
@@ -24,69 +25,71 @@ export const ServiceRequestDetailsView = ({ request, onClose }: ServiceRequestDe
   };
 
   return (
-    <div className="bg-background border rounded-lg p-6 animate-fade-in">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xl font-semibold">{request.request_number}</h3>
-            <Badge className={statusColors[request.status] || ""}>
-              {request.status}
-            </Badge>
-            <Badge className={priorityColors[request.priority] || ""}>
-              {request.priority}
-            </Badge>
-          </div>
-          <h4 className="text-lg font-medium text-muted-foreground">{request.title}</h4>
+    <div className="bg-background border rounded-lg animate-fade-in overflow-hidden">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold">{request.request_number}</h3>
+          <Badge className={statusColors[request.status] || ""} variant="secondary">
+            {request.status}
+          </Badge>
+          <Badge className={priorityColors[request.priority] || ""} variant="secondary">
+            {request.priority}
+          </Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+        <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="space-y-6">
+      {/* Content */}
+      <div className="p-4 space-y-4">
+        {/* Title */}
         <div>
-          <h5 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            Description
-          </h5>
-          <p className="text-sm text-muted-foreground">{request.description || "No description provided"}</p>
+          <h4 className="font-medium text-base">{request.title}</h4>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h5 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Created
-            </h5>
-            <p className="text-sm text-muted-foreground">
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Created</span>
+            <span className="font-medium">
               {format(new Date(request.created_at), "MMM d, yyyy 'at' h:mm a")}
-            </p>
+            </span>
           </div>
-          
-          <div>
-            <h5 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Requester
-            </h5>
-            <p className="text-sm text-muted-foreground">{request.requester_id || "Unknown"}</p>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Requester</span>
+            <span className="font-medium truncate ml-2">{request.requester_id || "Unknown"}</span>
           </div>
+        </div>
+
+        <Separator />
+
+        {/* Description */}
+        <div>
+          <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Description</h5>
+          <p className="text-sm">{request.description || "No description provided"}</p>
         </div>
 
         {request.additional_notes && (
-          <div>
-            <h5 className="text-sm font-semibold mb-2">Additional Notes</h5>
-            <p className="text-sm text-muted-foreground">{request.additional_notes}</p>
-          </div>
+          <>
+            <Separator />
+            <div>
+              <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Additional Notes</h5>
+              <p className="text-sm">{request.additional_notes}</p>
+            </div>
+          </>
         )}
 
-        <div className="flex gap-3 pt-4 border-t">
-          <Button variant="outline" size="sm">
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" size="sm" className="flex-1">
             Add Comment
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="flex-1">
             Update Status
           </Button>
-          <Button variant="outline" size="sm" className="ml-auto">
+          <Button variant="outline" size="sm">
             Close Request
           </Button>
         </div>
