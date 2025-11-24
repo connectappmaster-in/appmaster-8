@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateProblemDialog } from "@/components/helpdesk/CreateProblemDialog";
 import { TicketFilters } from "@/components/helpdesk/TicketFilters";
-import { BulkActionsToolbar } from "@/components/helpdesk/BulkActionsToolbar";
+import { BulkActionsButton } from "@/components/helpdesk/BulkActionsButton";
 import { TicketTableView } from "@/components/helpdesk/TicketTableView";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -159,6 +159,11 @@ export default function TicketsModule() {
                 </div>
 
                 <div className="flex items-center gap-2 ml-auto">
+                  <BulkActionsButton 
+                    selectedIds={selectedIds} 
+                    onClearSelection={() => setSelectedIds([])} 
+                  />
+                  
                   <Select
                     value={filters.status || 'all'}
                     onValueChange={(value) => setFilters({ ...filters, status: value === 'all' ? null : value })}
@@ -209,10 +214,6 @@ export default function TicketsModule() {
           </div>
 
           <TabsContent value="tickets" className="space-y-2 mt-2">
-
-            {/* Bulk Actions */}
-            {selectedIds.length > 0 && <BulkActionsToolbar selectedIds={selectedIds} onClearSelection={() => setSelectedIds([])} />}
-
             {/* Tickets Content */}
             {isLoading ? <div className="flex items-center justify-center py-12">
                 <div className="text-center space-y-2">
