@@ -240,60 +240,63 @@ export default function ServiceRequests() {
                       <TableHead className="text-xs font-medium h-9">TITLE</TableHead>
                       <TableHead className="text-xs font-medium h-9">STATUS</TableHead>
                       <TableHead className="text-xs font-medium h-9">PRIORITY</TableHead>
-                      <TableHead className="text-xs font-medium h-9">REQUESTED BY</TableHead>
+                      <TableHead className="text-xs font-medium h-9">REQUESTER</TableHead>
                       <TableHead className="text-xs font-medium h-9">CREATED</TableHead>
                       <TableHead className="text-xs font-medium h-9 text-right">ACTIONS</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requests.map((request: any) => (
-                      <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell className="font-mono text-xs py-2">{request.request_number || 'N/A'}</TableCell>
-                        <TableCell className="py-2">
-                          <div className="max-w-[300px]">
-                            <div className="font-medium text-sm truncate">{request.title}</div>
-                            <div className="text-xs text-muted-foreground truncate">{request.description}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <Badge variant="outline" className="text-xs">
-                            {request.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <Badge variant="outline" className="text-xs">
-                            {request.priority || 'medium'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm py-2">{request.requested_by || 'N/A'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground py-2">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right py-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="h-3.5 w-3.5 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-3.5 w-3.5 mr-2" />
-                                Edit Request
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                     {requests.map((request: any) => (
+                       <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50">
+                         <TableCell className="font-mono text-xs py-2">{request.request_number || 'N/A'}</TableCell>
+                         <TableCell className="py-2">
+                           <div className="max-w-[300px]">
+                             <div className="font-medium text-sm truncate">{request.title}</div>
+                             <div className="text-xs text-muted-foreground truncate">{request.description}</div>
+                           </div>
+                         </TableCell>
+                         <TableCell className="py-2">
+                           <Badge variant="outline" className="text-xs">
+                             {request.status}
+                           </Badge>
+                         </TableCell>
+                         <TableCell className="py-2">
+                           <Badge variant="outline" className="text-xs">
+                             {request.priority || 'medium'}
+                           </Badge>
+                         </TableCell>
+                         <TableCell className="text-sm py-2">{request.requester_id || 'N/A'}</TableCell>
+                         <TableCell className="text-xs text-muted-foreground py-2">
+                           {new Date(request.created_at).toLocaleDateString()}
+                         </TableCell>
+                         <TableCell className="text-right py-2">
+                           <DropdownMenu>
+                             <DropdownMenuTrigger asChild>
+                               <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                 <MoreHorizontal className="h-3.5 w-3.5" />
+                               </Button>
+                             </DropdownMenuTrigger>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem onClick={() => {
+                                 setSelectedRequest(request);
+                                 setRequestViewMode('details');
+                               }}>
+                                 <Eye className="h-3.5 w-3.5 mr-2" />
+                                 View Details
+                               </DropdownMenuItem>
+                               <DropdownMenuItem>
+                                 <Edit className="h-3.5 w-3.5 mr-2" />
+                                 Edit Request
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
+                           </DropdownMenu>
+                         </TableCell>
+                       </TableRow>
+                     ))}
+                   </TableBody>
+                 </Table>
+               </div>
+             )}
           </>
         )}
       </TabsContent>
@@ -375,16 +378,19 @@ export default function ServiceRequests() {
                                 <MoreHorizontal className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="h-3.5 w-3.5 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-3.5 w-3.5 mr-2" />
-                                Edit Change
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem onClick={() => {
+                                 setSelectedChange(change);
+                                 setChangeViewMode('details');
+                               }}>
+                                 <Eye className="h-3.5 w-3.5 mr-2" />
+                                 View Details
+                               </DropdownMenuItem>
+                               <DropdownMenuItem>
+                                 <Edit className="h-3.5 w-3.5 mr-2" />
+                                 Edit Change
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
