@@ -4517,13 +4517,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "srm_approvals_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "srm_requests"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "srm_approvals_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -4573,114 +4566,83 @@ export type Database = {
       }
       srm_catalog: {
         Row: {
-          auto_assign_to: string | null
-          category: string
+          category: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
-          display_order: number | null
-          estimated_delivery_days: number | null
+          estimated_fulfillment_time: string | null
           form_fields: Json | null
           icon: string | null
           id: number
           is_active: boolean | null
           name: string
           organisation_id: string | null
-          requires_approval: boolean | null
           tenant_id: number
           updated_at: string | null
         }
         Insert: {
-          auto_assign_to?: string | null
-          category: string
+          category?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          display_order?: number | null
-          estimated_delivery_days?: number | null
+          estimated_fulfillment_time?: string | null
           form_fields?: Json | null
           icon?: string | null
-          id?: number
+          id?: never
           is_active?: boolean | null
           name: string
           organisation_id?: string | null
-          requires_approval?: boolean | null
-          tenant_id: number
-          updated_at?: string | null
-        }
-        Update: {
-          auto_assign_to?: string | null
-          category?: string
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          display_order?: number | null
-          estimated_delivery_days?: number | null
-          form_fields?: Json | null
-          icon?: string | null
-          id?: number
-          is_active?: boolean | null
-          name?: string
-          organisation_id?: string | null
-          requires_approval?: boolean | null
           tenant_id?: number
           updated_at?: string | null
         }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          estimated_fulfillment_time?: string | null
+          form_fields?: Json | null
+          icon?: string | null
+          id?: never
+          is_active?: boolean | null
+          name?: string
+          organisation_id?: string | null
+          tenant_id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      srm_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: number
+          is_internal: boolean | null
+          request_id: number
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: never
+          is_internal?: boolean | null
+          request_id: number
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: never
+          is_internal?: boolean | null
+          request_id?: number
+          user_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "srm_catalog_auto_assign_to_fkey"
-            columns: ["auto_assign_to"]
+            foreignKeyName: "srm_comments_request_id_fkey"
+            columns: ["request_id"]
             isOneToOne: false
-            referencedRelation: "individual_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_auto_assign_to_fkey"
-            columns: ["auto_assign_to"]
-            isOneToOne: false
-            referencedRelation: "organization_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_auto_assign_to_fkey"
-            columns: ["auto_assign_to"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "individual_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "organization_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_organisation_id_fkey"
-            columns: ["organisation_id"]
-            isOneToOne: false
-            referencedRelation: "organisations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_catalog_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
+            referencedRelation: "srm_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -4751,13 +4713,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "srm_request_comments_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "srm_requests"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "srm_request_comments_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -4790,150 +4745,76 @@ export type Database = {
       srm_requests: {
         Row: {
           additional_notes: string | null
-          approval_required: boolean | null
-          approved_at: string | null
-          approved_by: string | null
-          assignee_id: string | null
+          assigned_to: string | null
+          attachments: string[] | null
           catalog_item_id: number | null
-          completed_at: string | null
           created_at: string | null
-          description: string | null
+          description: string
           form_data: Json | null
+          fulfilled_at: string | null
           id: number
+          is_deleted: boolean | null
           organisation_id: string | null
-          priority: string
+          priority: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
           request_number: string
-          requester_id: string
-          status: string
+          requester_id: string | null
+          status: string | null
           tenant_id: number
-          title: string | null
+          title: string
           updated_at: string | null
         }
         Insert: {
           additional_notes?: string | null
-          approval_required?: boolean | null
-          approved_at?: string | null
-          approved_by?: string | null
-          assignee_id?: string | null
+          assigned_to?: string | null
+          attachments?: string[] | null
           catalog_item_id?: number | null
-          completed_at?: string | null
           created_at?: string | null
-          description?: string | null
+          description: string
           form_data?: Json | null
-          id?: number
+          fulfilled_at?: string | null
+          id?: never
+          is_deleted?: boolean | null
           organisation_id?: string | null
-          priority?: string
+          priority?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
           request_number: string
-          requester_id: string
-          status?: string
-          tenant_id: number
-          title?: string | null
+          requester_id?: string | null
+          status?: string | null
+          tenant_id?: number
+          title: string
           updated_at?: string | null
         }
         Update: {
           additional_notes?: string | null
-          approval_required?: boolean | null
-          approved_at?: string | null
-          approved_by?: string | null
-          assignee_id?: string | null
+          assigned_to?: string | null
+          attachments?: string[] | null
           catalog_item_id?: number | null
-          completed_at?: string | null
           created_at?: string | null
-          description?: string | null
+          description?: string
           form_data?: Json | null
-          id?: number
+          fulfilled_at?: string | null
+          id?: never
+          is_deleted?: boolean | null
           organisation_id?: string | null
-          priority?: string
+          priority?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
           request_number?: string
-          requester_id?: string
-          status?: string
+          requester_id?: string | null
+          status?: string | null
           tenant_id?: number
-          title?: string | null
+          title?: string
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "srm_requests_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "individual_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "organization_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_assignee_id_fkey"
-            columns: ["assignee_id"]
-            isOneToOne: false
-            referencedRelation: "individual_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_assignee_id_fkey"
-            columns: ["assignee_id"]
-            isOneToOne: false
-            referencedRelation: "organization_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_assignee_id_fkey"
-            columns: ["assignee_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "srm_requests_catalog_item_id_fkey"
             columns: ["catalog_item_id"]
             isOneToOne: false
             referencedRelation: "srm_catalog"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_organisation_id_fkey"
-            columns: ["organisation_id"]
-            isOneToOne: false
-            referencedRelation: "organisations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "individual_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "organization_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "srm_requests_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]

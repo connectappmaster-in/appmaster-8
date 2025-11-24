@@ -256,12 +256,12 @@ export default function RequestDetail() {
                     <p className="font-medium">{request.requester_id}</p>
                   </div>
                 </div>
-                {request.assignee_id && (
+                {request.assigned_to && (
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-muted-foreground">Assigned To</p>
-                      <p className="font-medium">{request.assignee_id}</p>
+                      <p className="font-medium">{request.assigned_to}</p>
                     </div>
                   </div>
                 )}

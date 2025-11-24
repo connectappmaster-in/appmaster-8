@@ -92,13 +92,14 @@ export const CreateServiceRequestDialog = ({
         request_number: requestNumber,
         catalog_item_id: service.id,
         requester_id: currentUser.userId,
-        assignee_id: service.auto_assign_to,
+        title: service.name,
+        description: service.description || "Service request",
+        assigned_to: service.auto_assign_to,
         organisation_id: currentUser.orgId,
         tenant_id: currentUser.tenantId,
         additional_notes: values.additional_notes,
         form_data: values.form_data || {},
-        approval_required: service.requires_approval,
-        status: service.requires_approval ? "pending" : "approved",
+        status: service.requires_approval ? "pending" : "in_progress",
         priority: "medium",
       };
 
