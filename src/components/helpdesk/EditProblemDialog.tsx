@@ -203,9 +203,10 @@ export function EditProblemDialog({ open, onOpenChange, problem }: EditProblemDi
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="investigating">Investigating</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
                   <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="known_error">Known Error</SelectItem>
                 </SelectContent>
               </Select>
             </div>

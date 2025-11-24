@@ -39,7 +39,7 @@ export const BulkActionsProblemButton = ({ selectedIds, onClearSelection }: Bulk
     queryFn: async () => {
       const { data } = await supabase
         .from('users')
-        .select('id, name, email')
+        .select('id, auth_user_id, name, email')
         .eq('status', 'active')
         .order('name');
       return data || [];
@@ -110,14 +110,17 @@ export const BulkActionsProblemButton = ({ selectedIds, onClearSelection }: Bulk
               <DropdownMenuItem onClick={() => bulkUpdateMutation.mutate({ field: 'status', value: 'open' })}>
                 Open
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkUpdateMutation.mutate({ field: 'status', value: 'investigating' })}>
-                Investigating
+              <DropdownMenuItem onClick={() => bulkUpdateMutation.mutate({ field: 'status', value: 'in_progress' })}>
+                In Progress
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkUpdateMutation.mutate({ field: 'status', value: 'resolved' })}>
                 Resolved
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkUpdateMutation.mutate({ field: 'status', value: 'closed' })}>
                 Closed
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkUpdateMutation.mutate({ field: 'status', value: 'known_error' })}>
+                Known Error
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
@@ -156,7 +159,7 @@ export const BulkActionsProblemButton = ({ selectedIds, onClearSelection }: Bulk
               {users?.map((user) => (
                 <DropdownMenuItem 
                   key={user.id} 
-                  onClick={() => bulkUpdateMutation.mutate({ field: 'assigned_to', value: user.id })}
+                  onClick={() => bulkUpdateMutation.mutate({ field: 'assigned_to', value: user.auth_user_id })}
                 >
                   {user.name || user.email}
                 </DropdownMenuItem>

@@ -39,7 +39,7 @@ export const BulkActionsButton = ({ selectedIds, onClearSelection }: BulkActions
     queryFn: async () => {
       const { data } = await supabase
         .from('users')
-        .select('id, name, email')
+        .select('id, auth_user_id, name, email')
         .eq('status', 'active')
         .order('name');
       return data || [];
@@ -163,7 +163,7 @@ export const BulkActionsButton = ({ selectedIds, onClearSelection }: BulkActions
               {users?.map((user) => (
                 <DropdownMenuItem 
                   key={user.id} 
-                  onClick={() => bulkUpdateMutation.mutate({ field: 'assigned_to', value: user.id })}
+                  onClick={() => bulkUpdateMutation.mutate({ field: 'assigned_to', value: user.auth_user_id })}
                 >
                   {user.name || user.email}
                 </DropdownMenuItem>
