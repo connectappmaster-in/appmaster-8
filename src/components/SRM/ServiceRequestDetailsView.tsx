@@ -42,53 +42,52 @@ export const ServiceRequestDetailsView = ({ request, onClose }: ServiceRequestDe
         </Button>
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Title */}
-        <div>
-          <h4 className="font-semibold text-base mb-3">{request.title}</h4>
+      {/* Table-based Content */}
+      <div className="p-0">
+        {/* Title Section */}
+        <div className="px-4 py-3 border-b">
+          <h4 className="font-semibold text-base">{request.title}</h4>
         </div>
 
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-3 gap-4 text-sm py-2">
-          <div>
-            <span className="text-muted-foreground text-xs">Created</span>
-            <p className="font-medium mt-0.5">
+        {/* Details Table */}
+        <div className="divide-y">
+          <div className="grid grid-cols-3 px-4 py-2.5 hover:bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase">Created</span>
+            <span className="col-span-2 text-sm">
               {format(new Date(request.created_at), "MMM d, yyyy 'at' h:mm a")}
-            </p>
+            </span>
           </div>
-          <div>
-            <span className="text-muted-foreground text-xs">Requester</span>
-            <p className="font-medium mt-0.5 truncate">{request.requester_id || "Unknown"}</p>
+          
+          <div className="grid grid-cols-3 px-4 py-2.5 hover:bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase">Requester</span>
+            <span className="col-span-2 text-sm truncate">{request.requester_id || "Unknown"}</span>
           </div>
-          <div>
-            <span className="text-muted-foreground text-xs">Status</span>
-            <p className="font-medium mt-0.5 capitalize">{request.status}</p>
+          
+          <div className="grid grid-cols-3 px-4 py-2.5 hover:bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase">Status</span>
+            <span className="col-span-2 text-sm capitalize">{request.status}</span>
           </div>
-        </div>
-
-        <Separator />
-
-        {/* Description */}
-        <div>
-          <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Description</h5>
-          <p className="text-sm leading-relaxed">{request.description || "No description provided"}</p>
-        </div>
-
-        {request.additional_notes && (
-          <>
-            <Separator />
-            <div>
-              <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Additional Notes</h5>
-              <p className="text-sm leading-relaxed">{request.additional_notes}</p>
+          
+          <div className="grid grid-cols-3 px-4 py-2.5 hover:bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase">Priority</span>
+            <span className="col-span-2 text-sm capitalize">{request.priority || "medium"}</span>
+          </div>
+          
+          <div className="grid grid-cols-3 px-4 py-2.5 hover:bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase">Description</span>
+            <span className="col-span-2 text-sm">{request.description || "No description provided"}</span>
+          </div>
+          
+          {request.additional_notes && (
+            <div className="grid grid-cols-3 px-4 py-2.5 hover:bg-muted/30">
+              <span className="text-xs font-medium text-muted-foreground uppercase">Additional Notes</span>
+              <span className="col-span-2 text-sm">{request.additional_notes}</span>
             </div>
-          </>
-        )}
-
-        <Separator />
+          )}
+        </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2 px-4 py-3 border-t bg-muted/10">
           <Button variant="outline" size="sm" className="flex-1">
             Add Comment
           </Button>
