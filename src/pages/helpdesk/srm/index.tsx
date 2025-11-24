@@ -45,10 +45,6 @@ export default function ServiceRequests() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="admin" className="gap-1.5 px-3 text-sm h-7">
-                <Settings className="h-3.5 w-3.5" />
-                Admin
-              </TabsTrigger>
             </TabsList>
 
             {activeTab === 'requests' && (
@@ -281,43 +277,6 @@ export default function ServiceRequests() {
             )}
           </TabsContent>
 
-          {/* Admin Tab */}
-          <TabsContent value="admin" className="space-y-2 mt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div 
-                className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => navigate('/helpdesk/service-requests/assignment-rules')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Settings className="h-4 w-4" />
-                  <h3 className="font-medium text-sm">Assignment Rules</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">Configure request routing</p>
-              </div>
-
-              <div 
-                className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => navigate('/helpdesk/service-requests/sla-policies')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4" />
-                  <h3 className="font-medium text-sm">SLA Policies</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">Manage service level agreements</p>
-              </div>
-
-              <div 
-                className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => navigate('/helpdesk/service-requests/reports')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-4 w-4" />
-                  <h3 className="font-medium text-sm">Reports</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">View analytics and metrics</p>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>
