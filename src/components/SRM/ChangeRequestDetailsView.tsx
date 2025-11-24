@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Calendar, AlertTriangle, TrendingUp } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { X } from "lucide-react";
 import { format } from "date-fns";
 
 interface ChangeRequestDetailsViewProps {
@@ -19,89 +20,89 @@ export const ChangeRequestDetailsView = ({ change, onClose }: ChangeRequestDetai
   };
 
   return (
-    <div className="bg-background border rounded-lg p-6 animate-fade-in">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xl font-semibold">{change.change_number}</h3>
-            <Badge className={statusColors[change.status] || ""}>
-              {change.status}
-            </Badge>
-          </div>
-          <h4 className="text-lg font-medium text-muted-foreground">{change.title}</h4>
+    <div className="bg-background border rounded-lg animate-fade-in overflow-hidden">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold">{change.change_number}</h3>
+          <Badge className={statusColors[change.status] || ""} variant="secondary">
+            {change.status}
+          </Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+        <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="space-y-6">
+      {/* Content */}
+      <div className="p-4 space-y-4">
+        {/* Title */}
         <div>
-          <h5 className="text-sm font-semibold mb-2">Description</h5>
-          <p className="text-sm text-muted-foreground">{change.description}</p>
+          <h4 className="font-medium text-base">{change.title}</h4>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <h5 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Risk Level
-            </h5>
-            <Badge variant="outline" className="capitalize">
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Risk Level</span>
+            <Badge variant="outline" className="capitalize text-xs h-5">
               {change.risk}
             </Badge>
           </div>
-          
-          <div>
-            <h5 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Impact
-            </h5>
-            <Badge variant="outline" className="capitalize">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Impact</span>
+            <Badge variant="outline" className="capitalize text-xs h-5">
               {change.impact}
             </Badge>
           </div>
-
-          <div>
-            <h5 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Created
-            </h5>
-            <p className="text-sm text-muted-foreground">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Created</span>
+            <span className="font-medium">
               {format(new Date(change.created_at), "MMM d, yyyy")}
-            </p>
+            </span>
           </div>
         </div>
 
+        <Separator />
+
+        {/* Description */}
+        <div>
+          <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Description</h5>
+          <p className="text-sm">{change.description}</p>
+        </div>
+
         {change.implementation_plan && (
-          <div>
-            <h5 className="text-sm font-semibold mb-2">Implementation Plan</h5>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {change.implementation_plan}
-            </p>
-          </div>
+          <>
+            <Separator />
+            <div>
+              <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Implementation Plan</h5>
+              <p className="text-sm whitespace-pre-wrap">{change.implementation_plan}</p>
+            </div>
+          </>
         )}
 
         {change.backout_plan && (
-          <div>
-            <h5 className="text-sm font-semibold mb-2">Backout Plan</h5>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {change.backout_plan}
-            </p>
-          </div>
+          <>
+            <Separator />
+            <div>
+              <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Backout Plan</h5>
+              <p className="text-sm whitespace-pre-wrap">{change.backout_plan}</p>
+            </div>
+          </>
         )}
 
-        <div className="flex gap-3 pt-4 border-t">
-          <Button variant="outline" size="sm">
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" size="sm" className="flex-1">
             Add Comment
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="flex-1">
             Update Status
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="flex-1">
             Schedule Change
           </Button>
-          <Button variant="outline" size="sm" className="ml-auto">
+          <Button variant="outline" size="sm">
             Cancel Change
           </Button>
         </div>
