@@ -6749,6 +6749,10 @@ export type Database = {
         Args: { ticket_id_param: number }
         Returns: undefined
       }
+      user_belongs_to_org_or_tenant: {
+        Args: { _organisation_id: string; _tenant_id: number }
+        Returns: boolean
+      }
       user_has_tool_access: {
         Args: { tool_key: string; user_auth_id: string }
         Returns: boolean
