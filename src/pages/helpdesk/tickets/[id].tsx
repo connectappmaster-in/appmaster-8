@@ -328,7 +328,7 @@ export default function TicketDetail() {
     mutationFn: async () => {
       const { error } = await supabase
         .from("helpdesk_tickets")
-        .delete()
+        .update({ is_deleted: true, updated_at: new Date().toISOString() })
         .eq("id", parseInt(ticketId!));
       if (error) throw error;
     },

@@ -87,6 +87,7 @@ export default function TicketsModule() {
           *,
           category:helpdesk_categories(name)
         `)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false });
       if (error) throw error;
       
