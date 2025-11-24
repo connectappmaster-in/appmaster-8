@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreateProblemDialog } from "@/components/helpdesk/CreateProblemDialog";
 import { TicketFilters } from "@/components/helpdesk/TicketFilters";
 import { BulkActionsButton } from "@/components/helpdesk/BulkActionsButton";
+import { BulkActionsProblemButton } from "@/components/helpdesk/BulkActionsProblemButton";
 import { TicketTableView } from "@/components/helpdesk/TicketTableView";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export default function TicketsModule() {
   const [editProblem, setEditProblem] = useState<any>(null);
   const [assignProblem, setAssignProblem] = useState<any>(null);
   const [selectedProblemIds, setSelectedProblemIds] = useState<number[]>([]);
+  const [problemFilters, setProblemFilters] = useState<Record<string, any>>({});
   const {
     data: allTickets,
     isLoading
@@ -110,7 +112,21 @@ export default function TicketsModule() {
       return data || [];
     }
   });
-  const problems = allProblems || [];
+  
+  // Client-side filtering for problems
+  const problems = (allProblems || []).filter((problem: any) => {
+    if (problemFilters.status && problem.status !== problemFilters.status) return false;
+    if (problemFilters.priority && problem.priority !== problemFilters.priority) return false;
+    if (problemFilters.search) {
+      const search = problemFilters.search.toLowerCase();
+      const matchesSearch = 
+        problem.title?.toLowerCase().includes(search) || 
+        problem.description?.toLowerCase().includes(search) || 
+        problem.problem_number?.toLowerCase().includes(search);
+      if (!matchesSearch) return false;
+    }
+    return true;
+  });
   const handleSelectTicket = (id: number) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
@@ -206,10 +222,61 @@ export default function TicketsModule() {
             )}
 
             {activeTab === 'problems' && (
-              <Button size="sm" onClick={() => setCreateProblemOpen(true)} className="gap-1.5 h-8 ml-auto">
-                <Plus className="h-3.5 w-3.5" />
-                <span className="text-sm">New Problem</span>
-              </Button>
+              <>
+                <div className="relative w-[250px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search problems..."
+                    value={problemFilters.search || ''}
+                    onChange={(e) => setProblemFilters({ ...problemFilters, search: e.target.value })}
+                    className="pl-9 h-8"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 ml-auto">
+                  <BulkActionsProblemButton 
+                    selectedIds={selectedProblemIds} 
+                    onClearSelection={() => setSelectedProblemIds([])} 
+                  />
+                  
+                  <Select
+                    value={problemFilters.status || 'all'}
+                    onValueChange={(value) => setProblemFilters({ ...problemFilters, status: value === 'all' ? null : value })}
+                  >
+                    <SelectTrigger className="w-[120px] h-8">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="investigating">Investigating</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={problemFilters.priority || 'all'}
+                    onValueChange={(value) => setProblemFilters({ ...problemFilters, priority: value === 'all' ? null : value })}
+                  >
+                    <SelectTrigger className="w-[120px] h-8">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priority</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button size="sm" onClick={() => setCreateProblemOpen(true)} className="gap-1.5 h-8">
+                    <Plus className="h-3.5 w-3.5" />
+                    <span className="text-sm">New Problem</span>
+                  </Button>
+                </div>
+              </>
             )}
           </div>
 
