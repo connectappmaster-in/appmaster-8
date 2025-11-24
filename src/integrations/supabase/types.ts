@@ -6590,6 +6590,14 @@ export type Database = {
       }
     }
     Functions: {
+      bulk_soft_delete_problems: {
+        Args: { problem_ids: number[] }
+        Returns: undefined
+      }
+      bulk_soft_delete_tickets: {
+        Args: { ticket_ids: number[] }
+        Returns: undefined
+      }
       calculate_sla_due_date: {
         Args: {
           org_id?: string
@@ -6745,6 +6753,10 @@ export type Database = {
       }
       is_appmaster_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      soft_delete_problem: {
+        Args: { problem_id_param: number }
+        Returns: undefined
+      }
       soft_delete_ticket: {
         Args: { ticket_id_param: number }
         Returns: undefined

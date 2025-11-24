@@ -69,10 +69,9 @@ export const BulkActionsProblemButton = ({ selectedIds, onClearSelection }: Bulk
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from('helpdesk_problems')
-        .update({ is_deleted: true, updated_at: new Date().toISOString() })
-        .in('id', selectedIds);
+      const { error } = await supabase.rpc('bulk_soft_delete_problems', {
+        problem_ids: selectedIds
+      });
       
       if (error) throw error;
     },
