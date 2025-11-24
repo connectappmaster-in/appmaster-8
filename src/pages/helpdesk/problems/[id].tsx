@@ -132,7 +132,7 @@ export default function HelpdeskProblemDetail() {
     mutationFn: async () => {
       const { error } = await supabase
         .from("helpdesk_problems")
-        .delete()
+        .update({ is_deleted: true, updated_at: new Date().toISOString() })
         .eq("id", Number(id));
       if (error) throw error;
     },
