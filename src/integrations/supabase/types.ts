@@ -234,6 +234,72 @@ export type Database = {
           },
         ]
       }
+      asset_depreciation_profiles: {
+        Row: {
+          asset_id: number
+          cost_basis: number
+          created_at: string | null
+          created_by: string | null
+          depreciation_start_date: string
+          frequency: string
+          id: string
+          is_active: boolean | null
+          is_deleted: boolean | null
+          method_id: string
+          prorate_first_period: boolean | null
+          prorate_last_period: boolean | null
+          salvage_value: number | null
+          switch_to_sl_threshold: boolean | null
+          tenant_id: number
+          updated_at: string | null
+          updated_by: string | null
+          useful_life_periods: number
+          useful_life_years: number
+        }
+        Insert: {
+          asset_id: number
+          cost_basis: number
+          created_at?: string | null
+          created_by?: string | null
+          depreciation_start_date: string
+          frequency: string
+          id?: string
+          is_active?: boolean | null
+          is_deleted?: boolean | null
+          method_id: string
+          prorate_first_period?: boolean | null
+          prorate_last_period?: boolean | null
+          salvage_value?: number | null
+          switch_to_sl_threshold?: boolean | null
+          tenant_id: number
+          updated_at?: string | null
+          updated_by?: string | null
+          useful_life_periods: number
+          useful_life_years: number
+        }
+        Update: {
+          asset_id?: number
+          cost_basis?: number
+          created_at?: string | null
+          created_by?: string | null
+          depreciation_start_date?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          is_deleted?: boolean | null
+          method_id?: string
+          prorate_first_period?: boolean | null
+          prorate_last_period?: boolean | null
+          salvage_value?: number | null
+          switch_to_sl_threshold?: boolean | null
+          tenant_id?: number
+          updated_at?: string | null
+          updated_by?: string | null
+          useful_life_periods?: number
+          useful_life_years?: number
+        }
+        Relationships: []
+      }
       asset_licenses: {
         Row: {
           cost: number | null
@@ -1051,55 +1117,120 @@ export type Database = {
       }
       depreciation_entries: {
         Row: {
+          accumulated_depreciation: number
           asset_id: number
+          book_value: number
           created_at: string | null
+          created_by: string | null
           depreciation_amount: number
-          id: number
-          organisation_id: string | null
-          period_date: string
+          entry_type: string
+          id: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          posted: boolean | null
+          profile_id: string
           tenant_id: number
         }
         Insert: {
+          accumulated_depreciation: number
           asset_id: number
+          book_value: number
           created_at?: string | null
+          created_by?: string | null
           depreciation_amount: number
-          id?: never
-          organisation_id?: string | null
-          period_date: string
+          entry_type: string
+          id?: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          posted?: boolean | null
+          profile_id: string
           tenant_id: number
         }
         Update: {
+          accumulated_depreciation?: number
           asset_id?: number
+          book_value?: number
           created_at?: string | null
+          created_by?: string | null
           depreciation_amount?: number
-          id?: never
-          organisation_id?: string | null
-          period_date?: string
+          entry_type?: string
+          id?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          posted?: boolean | null
+          profile_id?: string
           tenant_id?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "depreciation_entries_asset_id_fkey"
-            columns: ["asset_id"]
-            isOneToOne: false
-            referencedRelation: "assets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "depreciation_entries_organisation_id_fkey"
-            columns: ["organisation_id"]
-            isOneToOne: false
-            referencedRelation: "organisations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "depreciation_entries_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      depreciation_methods: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          parameters: Json | null
+          tenant_id: number
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parameters?: Json | null
+          tenant_id: number
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parameters?: Json | null
+          tenant_id?: number
+        }
+        Relationships: []
+      }
+      depreciation_run_logs: {
+        Row: {
+          created_at: string | null
+          entries_created: number | null
+          errors: Json | null
+          id: string
+          period_end: string
+          period_start: string
+          run_date: string | null
+          status: string
+          tenant_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          entries_created?: number | null
+          errors?: Json | null
+          id?: string
+          period_end: string
+          period_start: string
+          run_date?: string | null
+          status: string
+          tenant_id: number
+        }
+        Update: {
+          created_at?: string | null
+          entries_created?: number | null
+          errors?: Json | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          run_date?: string | null
+          status?: string
+          tenant_id?: number
+        }
+        Relationships: []
       }
       helpdesk_automation_logs: {
         Row: {
@@ -2777,14 +2908,18 @@ export type Database = {
       }
       itam_assets: {
         Row: {
+          accumulated_depreciation: number | null
           amc_end: string | null
           asset_tag: string
           assigned_date: string | null
           assigned_to: string | null
           attachments: string[] | null
+          book_value: number | null
           created_at: string | null
           created_by: string | null
           currency: string | null
+          current_depreciation_profile_id: string | null
+          depreciation_status: string | null
           expected_return_date: string | null
           hostname: string | null
           id: number
@@ -2808,14 +2943,18 @@ export type Database = {
           warranty_end: string | null
         }
         Insert: {
+          accumulated_depreciation?: number | null
           amc_end?: string | null
           asset_tag: string
           assigned_date?: string | null
           assigned_to?: string | null
           attachments?: string[] | null
+          book_value?: number | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
+          current_depreciation_profile_id?: string | null
+          depreciation_status?: string | null
           expected_return_date?: string | null
           hostname?: string | null
           id?: number
@@ -2839,14 +2978,18 @@ export type Database = {
           warranty_end?: string | null
         }
         Update: {
+          accumulated_depreciation?: number | null
           amc_end?: string | null
           asset_tag?: string
           assigned_date?: string | null
           assigned_to?: string | null
           attachments?: string[] | null
+          book_value?: number | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
+          current_depreciation_profile_id?: string | null
+          depreciation_status?: string | null
           expected_return_date?: string | null
           hostname?: string | null
           id?: number
@@ -6139,6 +6282,36 @@ export type Database = {
           price?: number | null
           updated_at?: string | null
           yearly_price?: number | null
+        }
+        Relationships: []
+      }
+      units_of_production_log: {
+        Row: {
+          asset_id: number
+          created_at: string | null
+          id: string
+          profile_id: string
+          tenant_id: number
+          units_consumed: number
+          usage_period: string
+        }
+        Insert: {
+          asset_id: number
+          created_at?: string | null
+          id?: string
+          profile_id: string
+          tenant_id: number
+          units_consumed: number
+          usage_period: string
+        }
+        Update: {
+          asset_id?: number
+          created_at?: string | null
+          id?: string
+          profile_id?: string
+          tenant_id?: number
+          units_consumed?: number
+          usage_period?: string
         }
         Relationships: []
       }
