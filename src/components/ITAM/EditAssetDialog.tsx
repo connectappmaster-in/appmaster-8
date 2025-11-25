@@ -31,15 +31,14 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 const assetSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  asset_type: z.string().optional(),
-  purchase_date: z.string().min(1, "Purchase date is required"),
-  purchase_price: z.string().min(1, "Purchase price is required"),
-  current_value: z.string().optional(),
-  salvage_value: z.string().optional(),
-  useful_life_years: z.string().optional(),
-  depreciation_method: z.string().optional(),
+  asset_id: z.string().optional(),
+  brand: z.string().optional(),
+  model: z.string().optional(),
+  description: z.string().optional(),
+  serial_number: z.string().optional(),
+  category: z.string().optional(),
   status: z.string().optional(),
+  assigned_to: z.string().optional(),
 });
 
 interface EditAssetDialogProps {
@@ -54,30 +53,28 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
   const form = useForm<z.infer<typeof assetSchema>>({
     resolver: zodResolver(assetSchema),
     defaultValues: {
-      name: "",
-      asset_type: "",
-      purchase_date: "",
-      purchase_price: "",
-      current_value: "",
-      salvage_value: "",
-      useful_life_years: "",
-      depreciation_method: "",
-      status: "active",
+      asset_id: "",
+      brand: "",
+      model: "",
+      description: "",
+      serial_number: "",
+      category: "",
+      status: "available",
+      assigned_to: "",
     },
   });
 
   useEffect(() => {
     if (asset) {
       form.reset({
-        name: asset.name || "",
-        asset_type: asset.asset_type || "",
-        purchase_date: asset.purchase_date || "",
-        purchase_price: asset.purchase_price?.toString() || "",
-        current_value: asset.current_value?.toString() || "",
-        salvage_value: asset.salvage_value?.toString() || "",
-        useful_life_years: asset.useful_life_years?.toString() || "",
-        depreciation_method: asset.depreciation_method || "",
-        status: asset.status || "active",
+        asset_id: asset.asset_id || asset.asset_tag || "",
+        brand: asset.brand || "",
+        model: asset.model || "",
+        description: asset.description || "",
+        serial_number: asset.serial_number || "",
+        category: asset.category || asset.type || "",
+        status: asset.status || "available",
+        assigned_to: asset.assigned_to || "",
       });
     }
   }, [asset, form]);
@@ -85,19 +82,18 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
   const updateAsset = useMutation({
     mutationFn: async (values: z.infer<typeof assetSchema>) => {
       const assetData = {
-        name: values.name,
-        asset_type: values.asset_type || null,
-        purchase_date: values.purchase_date,
-        purchase_price: parseFloat(values.purchase_price),
-        current_value: values.current_value ? parseFloat(values.current_value) : null,
-        salvage_value: values.salvage_value ? parseFloat(values.salvage_value) : null,
-        useful_life_years: values.useful_life_years ? parseInt(values.useful_life_years) : null,
-        depreciation_method: values.depreciation_method || null,
-        status: values.status || "active",
+        asset_id: values.asset_id || null,
+        brand: values.brand || null,
+        model: values.model || null,
+        description: values.description || null,
+        serial_number: values.serial_number || null,
+        category: values.category || null,
+        status: values.status || "available",
+        assigned_to: values.assigned_to || null,
       };
 
       const { data, error } = await supabase
-        .from("assets")
+        .from("itam_assets")
         .update(assetData)
         .eq("id", asset.id)
         .select()
@@ -119,7 +115,10 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
   const deleteAsset = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("assets").delete().eq("id", asset.id);
+      const { error } = await supabase
+        .from("itam_assets")
+        .update({ is_deleted: true })
+        .eq("id", asset.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -149,12 +148,12 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="asset_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Asset Name *</FormLabel>
+                    <FormLabel>Asset ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Dell Laptop" {...field} />
+                      <Input placeholder="Auto-generated" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,12 +162,12 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
               <FormField
                 control={form.control}
-                name="asset_type"
+                name="brand"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Asset Type</FormLabel>
+                    <FormLabel>Brand</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Laptop, Desktop, Server" {...field} />
+                      <Input placeholder="e.g., Dell, HP, Lenovo" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -177,12 +176,12 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
               <FormField
                 control={form.control}
-                name="purchase_date"
+                name="model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Date *</FormLabel>
+                    <FormLabel>Model</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input placeholder="e.g., Latitude 5420" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -191,12 +190,12 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
               <FormField
                 control={form.control}
-                name="purchase_price"
+                name="serial_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Price (₹) *</FormLabel>
+                    <FormLabel>Serial No</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input placeholder="e.g., SN123456789" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -205,13 +204,29 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
               <FormField
                 control={form.control}
-                name="current_value"
+                name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Current Value (₹)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                    </FormControl>
+                    <FormLabel>Category</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Laptop">Laptop</SelectItem>
+                        <SelectItem value="Desktop">Desktop</SelectItem>
+                        <SelectItem value="Monitor">Monitor</SelectItem>
+                        <SelectItem value="Printer">Printer</SelectItem>
+                        <SelectItem value="Phone">Phone</SelectItem>
+                        <SelectItem value="Tablet">Tablet</SelectItem>
+                        <SelectItem value="Server">Server</SelectItem>
+                        <SelectItem value="Network Device">Network Device</SelectItem>
+                        <SelectItem value="Furniture">Furniture</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -230,9 +245,11 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="available">Available</SelectItem>
+                        <SelectItem value="assigned">Assigned</SelectItem>
+                        <SelectItem value="in_repair">In Repair</SelectItem>
                         <SelectItem value="retired">Retired</SelectItem>
+                        <SelectItem value="lost">Lost</SelectItem>
                         <SelectItem value="disposed">Disposed</SelectItem>
                       </SelectContent>
                     </Select>
@@ -243,35 +260,12 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
               <FormField
                 control={form.control}
-                name="depreciation_method"
+                name="assigned_to"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Depreciation Method</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select method" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="straight_line">Straight Line</SelectItem>
-                        <SelectItem value="declining_balance">Declining Balance</SelectItem>
-                        <SelectItem value="sum_of_years">Sum of Years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="useful_life_years"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Useful Life (Years)</FormLabel>
+                    <FormLabel>Assigned To</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g., 5" {...field} />
+                      <Input placeholder="User ID or name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -280,12 +274,12 @@ export const EditAssetDialog = ({ asset, open, onOpenChange }: EditAssetDialogPr
 
               <FormField
                 control={form.control}
-                name="salvage_value"
+                name="description"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Salvage Value (₹)</FormLabel>
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input placeholder="Brief description of the asset" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

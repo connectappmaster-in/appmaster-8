@@ -90,17 +90,15 @@ const AssetsList = () => {
 
   const handleExport = () => {
     // Convert to CSV
-    const headers = ["Asset ID", "Brand", "Model", "Category", "Status", "Purchase Date", "Cost", "Location", "Department"];
+    const headers = ["Asset Name", "Type", "Status", "Purchase Date", "Purchase Price", "Current Value", "Depreciation"];
     const csvData = filteredAssets.map((asset) => [
-      asset.asset_id || asset.asset_tag,
-      asset.brand || "",
-      asset.model || "",
+      asset.brand && asset.model ? `${asset.brand} ${asset.model}` : asset.name,
       asset.category || asset.type,
       asset.status,
-      asset.purchase_date || "",
-      asset.cost || "",
-      asset.location || "",
-      asset.department || "",
+      asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString('en-GB') : "",
+      asset.cost || asset.purchase_price || "",
+      asset.book_value || asset.cost || "",
+      asset.accumulated_depreciation || "",
     ]);
 
     const csv = [headers, ...csvData].map((row) => row.join(",")).join("\n");
