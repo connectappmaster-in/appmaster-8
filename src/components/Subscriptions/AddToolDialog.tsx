@@ -307,10 +307,10 @@ const onSubmit = async (values: z.infer<typeof formSchema>) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Currency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
