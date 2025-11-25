@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, Eye, Edit, UserPlus, MoreHorizontal } from "lucide-react";
-import { format } from "date-fns";
 import { useState } from "react";
 import { EditAssetDialog } from "./EditAssetDialog";
 import { AssignAssetDialog } from "./AssignAssetDialog";
@@ -16,9 +15,11 @@ interface AssetsListProps {
 }
 
 const statusColors: Record<string, string> = {
-  active: "bg-success/10 text-success border-success/20",
-  maintenance: "bg-warning/10 text-warning border-warning/20",
+  available: "bg-success/10 text-success border-success/20",
+  assigned: "bg-primary/10 text-primary border-primary/20",
+  in_repair: "bg-warning/10 text-warning border-warning/20",
   retired: "bg-muted/10 text-muted-foreground border-muted/20",
+  lost: "bg-destructive/10 text-destructive border-destructive/20",
   disposed: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
@@ -47,7 +48,7 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
       const tenantId = profileData?.tenant_id || 1;
       const orgId = userData?.organisation_id;
 
-      let query = supabase.from("assets").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("itam_assets").select("*").eq("is_deleted", false).order("created_at", { ascending: false });
 
       if (orgId) {
         query = query.eq("organisation_id", orgId);
@@ -68,12 +69,14 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
   // Client-side filtering
   const filteredAssets = assets.filter((asset: any) => {
     if (filters.status && asset.status !== filters.status) return false;
-    if (filters.type && asset.asset_type !== filters.type) return false;
+    if (filters.type && asset.category !== filters.type) return false;
     if (filters.search) {
       const search = filters.search.toLowerCase();
       const matchesSearch = 
-        asset.name?.toLowerCase().includes(search) || 
-        asset.asset_type?.toLowerCase().includes(search);
+        asset.asset_id?.toLowerCase().includes(search) || 
+        asset.brand?.toLowerCase().includes(search) ||
+        asset.model?.toLowerCase().includes(search) ||
+        asset.serial_number?.toLowerCase().includes(search);
       if (!matchesSearch) return false;
     }
     return true;
@@ -112,13 +115,14 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs font-medium h-9">ASSET NAME</TableHead>
-              <TableHead className="text-xs font-medium h-9">TYPE</TableHead>
+              <TableHead className="text-xs font-medium h-9">ASSET ID</TableHead>
+              <TableHead className="text-xs font-medium h-9">BRAND</TableHead>
+              <TableHead className="text-xs font-medium h-9">MODEL</TableHead>
+              <TableHead className="text-xs font-medium h-9">DESCRIPTION</TableHead>
+              <TableHead className="text-xs font-medium h-9">SERIAL NO</TableHead>
+              <TableHead className="text-xs font-medium h-9">CATEGORY</TableHead>
               <TableHead className="text-xs font-medium h-9">STATUS</TableHead>
-              <TableHead className="text-xs font-medium h-9">PURCHASE DATE</TableHead>
-              <TableHead className="text-xs font-medium h-9">PURCHASE PRICE</TableHead>
-              <TableHead className="text-xs font-medium h-9">CURRENT VALUE</TableHead>
-              <TableHead className="text-xs font-medium h-9">DEPRECIATION</TableHead>
+              <TableHead className="text-xs font-medium h-9">ASSIGNED TO</TableHead>
               <TableHead className="text-xs font-medium h-9 text-right">ACTIONS</TableHead>
             </TableRow>
           </TableHeader>
@@ -126,65 +130,82 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
             {filteredAssets.map((asset: any) => (
               <TableRow key={asset.id} className="cursor-pointer hover:bg-muted/50">
                 <TableCell className="py-2">
-                  <div className="font-medium text-sm">{asset.name}</div>
+                  <div className="font-medium text-sm">{asset.asset_id || '—'}</div>
+                </TableCell>
+                <TableCell className="py-2 text-sm">
+                  {asset.brand || '—'}
+                </TableCell>
+                <TableCell className="py-2 text-sm">
+                  {asset.model || '—'}
+                </TableCell>
+                <TableCell className="py-2 text-sm text-muted-foreground max-w-[200px] truncate">
+                  {asset.description || '—'}
+                </TableCell>
+                <TableCell className="py-2 text-sm">
+                  {asset.serial_number || '—'}
                 </TableCell>
                 <TableCell className="py-2">
-                  {asset.asset_type && (
+                  {asset.category && (
                     <Badge variant="outline" className="text-xs capitalize">
-                      {asset.asset_type}
+                      {asset.category}
                     </Badge>
                   )}
                 </TableCell>
                 <TableCell className="py-2">
                   <Badge 
                     variant="outline" 
-                    className={`text-xs capitalize ${statusColors[asset.status || "active"]}`}
+                    className={`text-xs capitalize ${statusColors[asset.status || "available"]}`}
                   >
-                    {asset.status || 'active'}
+                    {asset.status || 'available'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground py-2">
-                  {format(new Date(asset.purchase_date), "MMM d, yyyy")}
-                </TableCell>
-                <TableCell className="text-sm font-medium py-2">
-                  ₹{asset.purchase_price.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-sm py-2">
-                  {asset.current_value !== null 
-                    ? `₹${asset.current_value.toLocaleString()}` 
-                    : '—'}
-                </TableCell>
-                <TableCell className="text-xs py-2">
-                  {asset.depreciation_method ? (
-                    <div className="flex flex-col">
-                      <span className="capitalize">{asset.depreciation_method}</span>
-                      {asset.useful_life_years && (
-                        <span className="text-muted-foreground">
-                          ({asset.useful_life_years}y)
-                        </span>
-                      )}
-                    </div>
-                  ) : '—'}
+                <TableCell className="py-2 text-sm">
+                  {asset.assigned_to || '—'}
                 </TableCell>
                 <TableCell className="text-right py-2">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setEditAsset(asset)}
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setAssignAsset(asset)}
-                    >
-                      <UserPlus className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                      >
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditAsset(asset)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditAsset(asset)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setAssignAsset(asset)}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Check In
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        Lost / Missing
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        Repair
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        Broken
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        Dispose
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        Replicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive">
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
