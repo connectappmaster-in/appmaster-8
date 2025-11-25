@@ -22,12 +22,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { DetailsTab } from "./tabs/DetailsTab";
-import { EventsTab } from "./tabs/EventsTab";
-import { PhotosTab } from "./tabs/PhotosTab";
-import { DocsTab } from "./tabs/DocsTab";
-import { WarrantyTab } from "./tabs/WarrantyTab";
-import { HistoryTab } from "./tabs/HistoryTab";
+import { DetailsTab } from "./[assetId]/tabs/DetailsTab";
+import { EventsTab } from "./[assetId]/tabs/EventsTab";
+import { PhotosTab } from "./[assetId]/tabs/PhotosTab";
+import { DocsTab } from "./[assetId]/tabs/DocsTab";
+import { WarrantyTab } from "./[assetId]/tabs/WarrantyTab";
+import { HistoryTab } from "./[assetId]/tabs/HistoryTab";
 
 const AssetDetail = () => {
   const { assetId } = useParams();
