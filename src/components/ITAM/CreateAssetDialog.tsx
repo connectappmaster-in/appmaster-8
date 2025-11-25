@@ -129,8 +129,12 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
     },
     onSuccess: () => {
       toast.success("Asset created successfully");
+      // Invalidate all asset-related queries
       queryClient.invalidateQueries({ queryKey: ["itam-assets-list"] });
+      queryClient.invalidateQueries({ queryKey: ["assets-count"] });
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
       queryClient.invalidateQueries({ queryKey: ["itam-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["itam-assets"] });
       form.reset();
       onOpenChange(false);
     },
