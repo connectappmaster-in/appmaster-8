@@ -49,7 +49,7 @@ const AssetsList = () => {
       }
 
       if (typeFilter && typeFilter !== "all") {
-        query = query.eq("type", typeFilter);
+        query = query.or(`type.eq.${typeFilter},category.eq.${typeFilter}`);
       }
 
       const { data } = await query;
@@ -60,9 +60,12 @@ const AssetsList = () => {
 
   const filteredAssets = assets.filter((asset) =>
     search
-      ? asset.name.toLowerCase().includes(search.toLowerCase()) ||
-        asset.asset_tag.toLowerCase().includes(search.toLowerCase()) ||
-        asset.serial_number?.toLowerCase().includes(search.toLowerCase())
+      ? asset.name?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.asset_tag?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.serial_number?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.asset_id?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.brand?.toLowerCase().includes(search.toLowerCase()) ||
+        asset.model?.toLowerCase().includes(search.toLowerCase())
       : true
   );
 
@@ -87,15 +90,17 @@ const AssetsList = () => {
 
   const handleExport = () => {
     // Convert to CSV
-    const headers = ["Asset Tag", "Name", "Type", "Model", "Serial Number", "Status", "Location"];
+    const headers = ["Asset ID", "Brand", "Model", "Category", "Status", "Purchase Date", "Cost", "Location", "Department"];
     const csvData = filteredAssets.map((asset) => [
-      asset.asset_tag,
-      asset.name,
-      asset.type,
+      asset.asset_id || asset.asset_tag,
+      asset.brand || "",
       asset.model || "",
-      asset.serial_number || "",
+      asset.category || asset.type,
       asset.status,
+      asset.purchase_date || "",
+      asset.cost || "",
       asset.location || "",
+      asset.department || "",
     ]);
 
     const csv = [headers, ...csvData].map((row) => row.join(",")).join("\n");
@@ -167,10 +172,12 @@ const AssetsList = () => {
               <SelectItem value="Laptop">Laptop</SelectItem>
               <SelectItem value="Desktop">Desktop</SelectItem>
               <SelectItem value="Monitor">Monitor</SelectItem>
+              <SelectItem value="Printer">Printer</SelectItem>
               <SelectItem value="Phone">Phone</SelectItem>
               <SelectItem value="Tablet">Tablet</SelectItem>
               <SelectItem value="Server">Server</SelectItem>
-              <SelectItem value="Printer">Printer</SelectItem>
+              <SelectItem value="Network Device">Network Device</SelectItem>
+              <SelectItem value="Furniture">Furniture</SelectItem>
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
@@ -181,14 +188,14 @@ const AssetsList = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Asset Tag</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Serial Number</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>ASSET NAME</TableHead>
+                <TableHead>TYPE</TableHead>
+                <TableHead>STATUS</TableHead>
+                <TableHead>PURCHASE DATE</TableHead>
+                <TableHead>PURCHASE PRICE</TableHead>
+                <TableHead>CURRENT VALUE</TableHead>
+                <TableHead>DEPRECIATION</TableHead>
+                <TableHead className="text-right">ACTIONS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -211,29 +218,45 @@ const AssetsList = () => {
                     className="cursor-pointer hover:bg-accent"
                     onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}
                   >
-                    <TableCell className="font-medium">{asset.asset_tag}</TableCell>
-                    <TableCell>{asset.name}</TableCell>
-                    <TableCell>{asset.type}</TableCell>
-                    <TableCell>{asset.model || "—"}</TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {asset.serial_number || "—"}
+                    <TableCell>
+                      <div className="font-medium">
+                        {asset.brand && asset.model ? `${asset.brand} ${asset.model}` : asset.name}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(asset.status)}>
-                        {asset.status}
+                      <Badge variant="secondary">{asset.category || asset.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={asset.status === 'available' ? 'default' : 'secondary'}
+                        className={asset.status === 'available' ? 'bg-green-500 text-white' : ''}
+                      >
+                        {asset.status === 'available' ? 'Active' : asset.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{asset.location || "—"}</TableCell>
+                    <TableCell>
+                      {asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString('en-GB', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      }).replace(/ /g, ' ') : "—"}
+                    </TableCell>
+                    <TableCell>₹{asset.cost?.toLocaleString('en-IN') || asset.purchase_price?.toLocaleString('en-IN') || "—"}</TableCell>
+                    <TableCell>₹{asset.book_value?.toLocaleString('en-IN') || asset.cost?.toLocaleString('en-IN') || "—"}</TableCell>
+                    <TableCell>{asset.accumulated_depreciation ? `₹${asset.accumulated_depreciation.toLocaleString('en-IN')}` : "—"}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/helpdesk/assets/detail/${asset.id}`);
                         }}
+                        className="h-8 w-8"
                       >
-                        View
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
                       </Button>
                     </TableCell>
                   </TableRow>
