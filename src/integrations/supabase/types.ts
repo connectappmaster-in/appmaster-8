@@ -234,6 +234,66 @@ export type Database = {
           },
         ]
       }
+      asset_contracts: {
+        Row: {
+          asset_id: number
+          contract_end: string | null
+          contract_start: string | null
+          contract_type: string | null
+          cost: number | null
+          created_at: string | null
+          document_url: string | null
+          id: string
+          notes: string | null
+          tenant_id: number
+          updated_at: string | null
+          vendor_id: number | null
+        }
+        Insert: {
+          asset_id: number
+          contract_end?: string | null
+          contract_start?: string | null
+          contract_type?: string | null
+          cost?: number | null
+          created_at?: string | null
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id: number
+          updated_at?: string | null
+          vendor_id?: number | null
+        }
+        Update: {
+          asset_id?: number
+          contract_end?: string | null
+          contract_start?: string | null
+          contract_type?: string | null
+          cost?: number | null
+          created_at?: string | null
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id?: number
+          updated_at?: string | null
+          vendor_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_contracts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_contracts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "itam_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_depreciation_profiles: {
         Row: {
           asset_id: number
@@ -299,6 +359,94 @@ export type Database = {
           useful_life_years?: number
         }
         Relationships: []
+      }
+      asset_documents: {
+        Row: {
+          asset_id: number
+          created_at: string | null
+          document_name: string
+          document_type: string | null
+          document_url: string
+          id: string
+          tenant_id: number
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          asset_id: number
+          created_at?: string | null
+          document_name: string
+          document_type?: string | null
+          document_url: string
+          id?: string
+          tenant_id: number
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          asset_id?: number
+          created_at?: string | null
+          document_name?: string
+          document_type?: string | null
+          document_url?: string
+          id?: string
+          tenant_id?: number
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_documents_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_events: {
+        Row: {
+          asset_id: number
+          created_at: string | null
+          event_description: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          performed_at: string | null
+          performed_by: string | null
+          tenant_id: number
+        }
+        Insert: {
+          asset_id: number
+          created_at?: string | null
+          event_description?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          performed_at?: string | null
+          performed_by?: string | null
+          tenant_id: number
+        }
+        Update: {
+          asset_id?: number
+          created_at?: string | null
+          event_description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          performed_at?: string | null
+          performed_by?: string | null
+          tenant_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_events_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       asset_licenses: {
         Row: {
@@ -374,6 +522,243 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_linked_items: {
+        Row: {
+          asset_id: number
+          created_at: string | null
+          id: string
+          link_type: string | null
+          linked_asset_id: number | null
+          tenant_id: number
+        }
+        Insert: {
+          asset_id: number
+          created_at?: string | null
+          id?: string
+          link_type?: string | null
+          linked_asset_id?: number | null
+          tenant_id: number
+        }
+        Update: {
+          asset_id?: number
+          created_at?: string | null
+          id?: string
+          link_type?: string | null
+          linked_asset_id?: number | null
+          tenant_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_linked_items_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_linked_items_linked_asset_id_fkey"
+            columns: ["linked_asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_maintenance: {
+        Row: {
+          asset_id: number
+          cost: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          issue_description: string
+          notes: string | null
+          resolved_at: string | null
+          status: string | null
+          tenant_id: number
+          updated_at: string | null
+          vendor_id: number | null
+        }
+        Insert: {
+          asset_id: number
+          cost?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          issue_description: string
+          notes?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          tenant_id: number
+          updated_at?: string | null
+          vendor_id?: number | null
+        }
+        Update: {
+          asset_id?: number
+          cost?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          issue_description?: string
+          notes?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          tenant_id?: number
+          updated_at?: string | null
+          vendor_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_maintenance_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_maintenance_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "itam_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_photos: {
+        Row: {
+          asset_id: number
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          photo_url: string
+          tenant_id: number
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          asset_id: number
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          photo_url: string
+          tenant_id: number
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          asset_id?: number
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          photo_url?: string
+          tenant_id?: number
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_photos_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_reservations: {
+        Row: {
+          asset_id: number
+          created_at: string | null
+          id: string
+          purpose: string | null
+          reserved_by: string
+          reserved_from: string
+          reserved_to: string
+          status: string | null
+          tenant_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          asset_id: number
+          created_at?: string | null
+          id?: string
+          purpose?: string | null
+          reserved_by: string
+          reserved_from: string
+          reserved_to: string
+          status?: string | null
+          tenant_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          asset_id?: number
+          created_at?: string | null
+          id?: string
+          purpose?: string | null
+          reserved_by?: string
+          reserved_from?: string
+          reserved_to?: string
+          status?: string | null
+          tenant_id?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_reservations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_warranties: {
+        Row: {
+          amc_end: string | null
+          amc_start: string | null
+          asset_id: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          tenant_id: number
+          updated_at: string | null
+          warranty_end: string | null
+          warranty_start: string | null
+        }
+        Insert: {
+          amc_end?: string | null
+          amc_start?: string | null
+          asset_id: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id: number
+          updated_at?: string | null
+          warranty_end?: string | null
+          warranty_start?: string | null
+        }
+        Update: {
+          amc_end?: string | null
+          amc_start?: string | null
+          asset_id?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id?: number
+          updated_at?: string | null
+          warranty_end?: string | null
+          warranty_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_warranties_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "itam_assets"
             referencedColumns: ["id"]
           },
         ]
@@ -2910,16 +3295,27 @@ export type Database = {
         Row: {
           accumulated_depreciation: number | null
           amc_end: string | null
+          asset_configuration: string | null
+          asset_id: string | null
           asset_tag: string
           assigned_date: string | null
           assigned_to: string | null
           attachments: string[] | null
           book_value: number | null
+          brand: string | null
+          category: string | null
+          checkout_date: string | null
+          checkout_notes: string | null
+          classification: string | null
+          cost: number | null
           created_at: string | null
           created_by: string | null
           currency: string | null
           current_depreciation_profile_id: string | null
+          department: string | null
           depreciation_status: string | null
+          description: string | null
+          due_date: string | null
           expected_return_date: string | null
           hostname: string | null
           id: number
@@ -2930,10 +3326,13 @@ export type Database = {
           model: string | null
           name: string
           organisation_id: string | null
+          photo_url: string | null
           purchase_date: string | null
           purchase_order_id: number | null
           purchase_price: number | null
+          purchased_from: string | null
           serial_number: string | null
+          site: string | null
           status: string | null
           tenant_id: number
           type: string
@@ -2945,16 +3344,27 @@ export type Database = {
         Insert: {
           accumulated_depreciation?: number | null
           amc_end?: string | null
+          asset_configuration?: string | null
+          asset_id?: string | null
           asset_tag: string
           assigned_date?: string | null
           assigned_to?: string | null
           attachments?: string[] | null
           book_value?: number | null
+          brand?: string | null
+          category?: string | null
+          checkout_date?: string | null
+          checkout_notes?: string | null
+          classification?: string | null
+          cost?: number | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
           current_depreciation_profile_id?: string | null
+          department?: string | null
           depreciation_status?: string | null
+          description?: string | null
+          due_date?: string | null
           expected_return_date?: string | null
           hostname?: string | null
           id?: number
@@ -2965,10 +3375,13 @@ export type Database = {
           model?: string | null
           name: string
           organisation_id?: string | null
+          photo_url?: string | null
           purchase_date?: string | null
           purchase_order_id?: number | null
           purchase_price?: number | null
+          purchased_from?: string | null
           serial_number?: string | null
+          site?: string | null
           status?: string | null
           tenant_id: number
           type: string
@@ -2980,16 +3393,27 @@ export type Database = {
         Update: {
           accumulated_depreciation?: number | null
           amc_end?: string | null
+          asset_configuration?: string | null
+          asset_id?: string | null
           asset_tag?: string
           assigned_date?: string | null
           assigned_to?: string | null
           attachments?: string[] | null
           book_value?: number | null
+          brand?: string | null
+          category?: string | null
+          checkout_date?: string | null
+          checkout_notes?: string | null
+          classification?: string | null
+          cost?: number | null
           created_at?: string | null
           created_by?: string | null
           currency?: string | null
           current_depreciation_profile_id?: string | null
+          department?: string | null
           depreciation_status?: string | null
+          description?: string | null
+          due_date?: string | null
           expected_return_date?: string | null
           hostname?: string | null
           id?: number
@@ -3000,10 +3424,13 @@ export type Database = {
           model?: string | null
           name?: string
           organisation_id?: string | null
+          photo_url?: string | null
           purchase_date?: string | null
           purchase_order_id?: number | null
           purchase_price?: number | null
+          purchased_from?: string | null
           serial_number?: string | null
+          site?: string | null
           status?: string | null
           tenant_id?: number
           type?: string

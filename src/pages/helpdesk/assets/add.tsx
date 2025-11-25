@@ -1,380 +1,432 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganisation } from "@/contexts/OrganisationContext";
 import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, X } from "lucide-react";
 
 const AddAsset = () => {
   const navigate = useNavigate();
   const { organisation } = useOrganisation();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("single");
-
-  // Single asset form
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
-    name: "",
-    type: "",
+    asset_id: "",
+    brand: "",
     model: "",
-    serial_number: "",
-    mac_address: "",
-    hostname: "",
+    description: "",
+    asset_configuration: "",
     purchase_date: "",
-    purchase_price: "",
-    currency: "USD",
+    cost: "",
+    serial_number: "",
+    purchased_from: "",
+    classification: "Internal",
+    site: "",
     location: "",
-    warranty_end: "",
-    amc_end: "",
-    vendor_id: "",
+    category: "",
+    department: "",
+    status: "available"
   });
 
-  // Fetch vendors
-  const { data: vendors = [] } = useQuery({
-    queryKey: ["itam-vendors", organisation?.id],
-    queryFn: async () => {
-      if (!organisation?.id) return [];
-      const { data } = await supabase
-        .from("itam_vendors")
-        .select("*")
-        .eq("organisation_id", organisation.id)
-        .eq("is_deleted", false);
-      return data || [];
-    },
-    enabled: !!organisation?.id,
-  });
+  // Handle photo upload
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  // Generate asset tag
-  const generateAssetTag = async (tenantId: number) => {
-    const { data, error } = await supabase.rpc("generate_asset_tag", {
-      tenant_id_param: tenantId,
-    });
-    if (error) throw error;
-    return data;
+    // Validate file type
+    if (!['image/jpeg', 'image/jpg', 'image/gif', 'image/png'].includes(file.type)) {
+      toast.error("Invalid file type. Please upload JPG, GIF, or PNG.");
+      return;
+    }
+
+    // Validate file size (500 KB = 512000 bytes)
+    if (file.size > 512000) {
+      toast.error("File size exceeds 500 KB. Please upload a smaller image.");
+      return;
+    }
+
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
   };
 
   // Create asset mutation
   const createAsset = useMutation({
-    mutationFn: async (assetData: any) => {
+    mutationFn: async (data: typeof formData) => {
       if (!organisation?.id) throw new Error("No organization");
 
-      // Generate asset tag
-      const assetTag = await generateAssetTag(1); // Assuming tenant_id = 1
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile) throw new Error("Profile not found");
+
+      let photoUrl = null;
+
+      // Upload photo if selected
+      if (photoFile) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${profile.tenant_id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('asset-photos')
+          .upload(fileName, photoFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('asset-photos')
+          .getPublicUrl(fileName);
+
+        photoUrl = publicUrl;
+      }
+
+      // Generate asset tag
+      const assetTag = `AST-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
+      const { data: asset, error } = await supabase
         .from("itam_assets")
-        .insert({
-          ...assetData,
+        .insert([{
+          name: data.brand + " " + data.model,
           asset_tag: assetTag,
+          asset_id: data.asset_id,
+          brand: data.brand,
+          model: data.model,
+          description: data.description,
+          asset_configuration: data.asset_configuration,
+          serial_number: data.serial_number,
+          purchase_date: data.purchase_date || null,
+          cost: data.cost ? parseFloat(data.cost) : null,
+          purchased_from: data.purchased_from,
+          classification: data.classification,
+          site: data.site,
+          location: data.location,
+          category: data.category,
+          department: data.department,
+          photo_url: photoUrl,
+          status: data.status,
+          tenant_id: profile.tenant_id,
           organisation_id: organisation.id,
-          tenant_id: 1,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        })
+          created_by: user.id,
+          type: data.category || "Other"
+        }])
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+
+      // Create asset event
+      await supabase.from("asset_events").insert({
+        tenant_id: profile.tenant_id,
+        asset_id: asset.id,
+        event_type: "created",
+        event_description: "Asset created",
+        performed_by: user.id
+      });
+
+      return asset;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["itam-assets"] });
       toast.success("Asset created successfully");
+      queryClient.invalidateQueries({ queryKey: ["itam-assets"] });
       navigate(`/helpdesk/assets/detail/${data.id}`);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create asset");
-    },
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.type) {
-      toast.error("Please fill in required fields");
+    if (!formData.asset_id || !formData.brand || !formData.model) {
+      toast.error("Please fill all required fields (Asset ID, Brand, Model)");
       return;
     }
 
-    createAsset.mutate({
-      name: formData.name,
-      type: formData.type,
-      model: formData.model || null,
-      serial_number: formData.serial_number || null,
-      mac_address: formData.mac_address || null,
-      hostname: formData.hostname || null,
-      purchase_date: formData.purchase_date || null,
-      purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-      currency: formData.currency,
-      location: formData.location || null,
-      warranty_end: formData.warranty_end || null,
-      amc_end: formData.amc_end || null,
-      vendor_id: formData.vendor_id ? parseInt(formData.vendor_id) : null,
-      status: "available",
-    });
+    createAsset.mutate(formData);
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <BackButton />
-          <div>
-            <h1 className="text-2xl font-bold">Add New Asset</h1>
-            <p className="text-sm text-muted-foreground">
-              Add hardware, software, or equipment to your inventory
-            </p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <BackButton />
+      
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Add New Asset</h1>
+          <p className="text-muted-foreground mt-2">Create a new asset record</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="single">Single Asset</TabsTrigger>
-            <TabsTrigger value="bulk">Bulk Import</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="single">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Asset Information</CardTitle>
-                  <CardDescription>Basic details about the asset</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">
-                        Asset Name <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g., Dell Laptop"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="type">
-                        Type <span className="text-red-500">*</span>
-                      </Label>
-                      <Select
-                        value={formData.type}
-                        onValueChange={(value) => setFormData({ ...formData, type: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Laptop">Laptop</SelectItem>
-                          <SelectItem value="Desktop">Desktop</SelectItem>
-                          <SelectItem value="Monitor">Monitor</SelectItem>
-                          <SelectItem value="Phone">Phone</SelectItem>
-                          <SelectItem value="Tablet">Tablet</SelectItem>
-                          <SelectItem value="Server">Server</SelectItem>
-                          <SelectItem value="Printer">Printer</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="model">Model</Label>
-                      <Input
-                        id="model"
-                        value={formData.model}
-                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                        placeholder="e.g., Latitude 5420"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="serial_number">Serial Number</Label>
-                      <Input
-                        id="serial_number"
-                        value={formData.serial_number}
-                        onChange={(e) =>
-                          setFormData({ ...formData, serial_number: e.target.value })
-                        }
-                        placeholder="e.g., ABC123XYZ"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="mac_address">MAC Address</Label>
-                      <Input
-                        id="mac_address"
-                        value={formData.mac_address}
-                        onChange={(e) => setFormData({ ...formData, mac_address: e.target.value })}
-                        placeholder="e.g., 00:1B:44:11:3A:B7"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="hostname">Hostname</Label>
-                      <Input
-                        id="hostname"
-                        value={formData.hostname}
-                        onChange={(e) => setFormData({ ...formData, hostname: e.target.value })}
-                        placeholder="e.g., DESK-001"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={formData.location}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        placeholder="e.g., Floor 3, Room 301"
-                      />
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Basic Info Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="asset_id">Asset ID *</Label>
+                    <Input
+                      id="asset_id"
+                      value={formData.asset_id}
+                      onChange={(e) => setFormData({ ...formData, asset_id: e.target.value })}
+                      placeholder="e.g., AST-001"
+                      required
+                    />
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Purchase Information</CardTitle>
-                  <CardDescription>Details about the purchase and vendor</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="vendor_id">Vendor</Label>
-                      <Select
-                        value={formData.vendor_id}
-                        onValueChange={(value) => setFormData({ ...formData, vendor_id: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select vendor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {vendors.map((vendor) => (
-                            <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                              {vendor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="purchase_date">Purchase Date</Label>
-                      <Input
-                        id="purchase_date"
-                        type="date"
-                        value={formData.purchase_date}
-                        onChange={(e) =>
-                          setFormData({ ...formData, purchase_date: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="purchase_price">Purchase Price</Label>
-                      <Input
-                        id="purchase_price"
-                        type="number"
-                        step="0.01"
-                        value={formData.purchase_price}
-                        onChange={(e) =>
-                          setFormData({ ...formData, purchase_price: e.target.value })
-                        }
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="currency">Currency</Label>
-                      <Select
-                        value={formData.currency}
-                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                          <SelectItem value="INR">INR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="warranty_end">Warranty End Date</Label>
-                      <Input
-                        id="warranty_end"
-                        type="date"
-                        value={formData.warranty_end}
-                        onChange={(e) => setFormData({ ...formData, warranty_end: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="amc_end">AMC End Date</Label>
-                      <Input
-                        id="amc_end"
-                        type="date"
-                        value={formData.amc_end}
-                        onChange={(e) => setFormData({ ...formData, amc_end: e.target.value })}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="brand">Brand *</Label>
+                    <Input
+                      id="brand"
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      placeholder="e.g., Dell, HP, Apple"
+                      required
+                    />
                   </div>
-                </CardContent>
-              </Card>
 
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+                  <div className="space-y-2">
+                    <Label htmlFor="model">Model *</Label>
+                    <Input
+                      id="model"
+                      value={formData.model}
+                      onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                      placeholder="e.g., Latitude 5420"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Asset description"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="asset_configuration">Asset Configuration</Label>
+                    <Input
+                      id="asset_configuration"
+                      value={formData.asset_configuration}
+                      onChange={(e) => setFormData({ ...formData, asset_configuration: e.target.value })}
+                      placeholder="e.g., i5/8GB/256GB SSD"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Purchase Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">Purchase Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="purchase_date">Purchase Date</Label>
+                    <Input
+                      id="purchase_date"
+                      type="date"
+                      value={formData.purchase_date}
+                      onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cost">Cost (₹)</Label>
+                    <Input
+                      id="cost"
+                      type="number"
+                      step="0.01"
+                      value={formData.cost}
+                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="serial_number">Serial No</Label>
+                    <Input
+                      id="serial_number"
+                      value={formData.serial_number}
+                      onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                      placeholder="Serial number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="purchased_from">Purchased From</Label>
+                    <Input
+                      id="purchased_from"
+                      value={formData.purchased_from}
+                      onChange={(e) => setFormData({ ...formData, purchased_from: e.target.value })}
+                      placeholder="Vendor name"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Classification Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">Classification</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="classification">Asset Classification</Label>
+                    <Select 
+                      value={formData.classification} 
+                      onValueChange={(value) => setFormData({ ...formData, classification: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select classification" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Confidential">Confidential</SelectItem>
+                        <SelectItem value="Internal">Internal</SelectItem>
+                        <SelectItem value="Public">Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Organization Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">Organization</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="site">Site</Label>
+                    <Input
+                      id="site"
+                      value={formData.site}
+                      onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+                      placeholder="e.g., Head Office"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="e.g., Floor 3, Room 305"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Laptop">Laptop</SelectItem>
+                        <SelectItem value="Desktop">Desktop</SelectItem>
+                        <SelectItem value="Monitor">Monitor</SelectItem>
+                        <SelectItem value="Printer">Printer</SelectItem>
+                        <SelectItem value="Phone">Phone</SelectItem>
+                        <SelectItem value="Tablet">Tablet</SelectItem>
+                        <SelectItem value="Server">Server</SelectItem>
+                        <SelectItem value="Network Device">Network Device</SelectItem>
+                        <SelectItem value="Furniture">Furniture</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Input
+                      id="department"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      placeholder="e.g., IT, HR, Finance"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo Upload Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">Asset Photo</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="photo">Upload Photo (JPG/GIF/PNG, max 500 KB)</Label>
+                    <Input
+                      id="photo"
+                      type="file"
+                      accept=".jpg,.jpeg,.gif,.png"
+                      onChange={handlePhotoChange}
+                      className="cursor-pointer"
+                    />
+                  </div>
+
+                  {photoPreview && (
+                    <div className="relative inline-block">
+                      <img 
+                        src={photoPreview} 
+                        alt="Preview" 
+                        className="h-32 w-32 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        onClick={removePhoto}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/helpdesk/assets")}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={createAsset.isPending}>
-                  {createAsset.isPending ? "Creating..." : "Create Asset"}
+                  {createAsset.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create Asset
                 </Button>
               </div>
             </form>
-          </TabsContent>
-
-          <TabsContent value="bulk">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bulk Import</CardTitle>
-                <CardDescription>
-                  Upload a CSV file to import multiple assets at once
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Drag and drop your CSV file here, or click to browse
-                  </p>
-                  <Button variant="outline">Choose File</Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Download the{" "}
-                  <a href="#" className="text-primary underline">
-                    CSV template
-                  </a>{" "}
-                  to see the required format.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
