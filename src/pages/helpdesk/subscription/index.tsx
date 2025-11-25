@@ -47,7 +47,7 @@ const HelpdeskSubscriptionLayout = () => {
     queryFn: async () => {
       if (!organisation?.id) return [];
       const { data } = await supabase
-        .from("asset_licenses")
+        .from("subscriptions_licenses")
         .select("*")
         .eq("organisation_id", organisation.id);
       return data || [];

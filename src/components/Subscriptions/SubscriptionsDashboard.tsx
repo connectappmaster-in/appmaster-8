@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Package, Calendar, AlertTriangle } from "lucide-react";
@@ -9,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export const SubscriptionsDashboard = () => {
   const { organisation } = useOrganisation();
+  const queryClient = useQueryClient();
 
   const { data: tools, isLoading: toolsLoading } = useQuery({
     queryKey: ["subscriptions-tools", organisation?.id],
@@ -23,6 +25,31 @@ export const SubscriptionsDashboard = () => {
     },
     enabled: !!organisation?.id,
   });
+
+  // Real-time subscription for tools
+  useEffect(() => {
+    if (!organisation?.id) return;
+
+    const channel = supabase
+      .channel('subscriptions-tools-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions_tools',
+          filter: `organisation_id=eq.${organisation.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["subscriptions-tools", organisation.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organisation?.id, queryClient]);
 
   // Calculate monthly burn rate with currency conversion
   const monthlyBurnRate = tools
