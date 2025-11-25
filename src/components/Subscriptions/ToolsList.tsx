@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganisation } from "@/contexts/OrganisationContext";
 import { Button } from "@/components/ui/button";
@@ -13,25 +13,23 @@ import { format } from "date-fns";
 import { AddToolDialog } from "./AddToolDialog";
 import { useToast } from "@/hooks/use-toast";
 export const ToolsList = () => {
-  const {
-    organisation
-  } = useOrganisation();
-  const {
-    toast
-  } = useToast();
+  const { organisation } = useOrganisation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<any | null>(null);
-  const {
-    data: tools,
-    isLoading,
-    refetch
-  } = useQuery({
+
+  const { data: tools, isLoading, refetch } = useQuery({
     queryKey: ["subscriptions-tools", organisation?.id, searchTerm, statusFilter, categoryFilter],
     queryFn: async () => {
-      let query = supabase.from("subscriptions_tools").select("*, subscriptions_vendors(vendor_name)").eq("organisation_id", organisation?.id!);
+      let query = supabase
+        .from("subscriptions_tools")
+        .select("*, subscriptions_vendors(vendor_name)")
+        .eq("organisation_id", organisation?.id!);
+
       if (searchTerm) {
         query = query.ilike("tool_name", `%${searchTerm}%`);
       }
@@ -41,17 +39,38 @@ export const ToolsList = () => {
       if (categoryFilter !== "all") {
         query = query.eq("category", categoryFilter);
       }
-      const {
-        data,
-        error
-      } = await query.order("created_at", {
-        ascending: false
-      });
+
+      const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!organisation?.id
+    enabled: !!organisation?.id,
   });
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!organisation?.id) return;
+
+    const channel = supabase
+      .channel('tools-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions_tools',
+          filter: `organisation_id=eq.${organisation.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["subscriptions-tools"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organisation?.id, queryClient]);
   const handleDelete = async (id: string) => {
     const {
       error

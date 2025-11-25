@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganisation } from "@/contexts/OrganisationContext";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { convertToINR, formatINR } from "@/lib/currencyConversion";
 export const PaymentsList = () => {
   const { organisation } = useOrganisation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -44,6 +45,31 @@ export const PaymentsList = () => {
     },
     enabled: !!organisation?.id,
   });
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!organisation?.id) return;
+
+    const channel = supabase
+      .channel('payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions_payments',
+          filter: `organisation_id=eq.${organisation.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["subscriptions-payments"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organisation?.id, queryClient]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase

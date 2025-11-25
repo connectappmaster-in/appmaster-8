@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganisation } from "@/contexts/OrganisationContext";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export const VendorsList = () => {
   const { organisation } = useOrganisation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
@@ -36,6 +37,48 @@ export const VendorsList = () => {
     },
     enabled: !!organisation?.id,
   });
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!organisation?.id) return;
+
+    const vendorsChannel = supabase
+      .channel('vendors-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions_vendors',
+          filter: `organisation_id=eq.${organisation.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["subscriptions-vendors"] });
+        }
+      )
+      .subscribe();
+
+    const toolsChannel = supabase
+      .channel('vendors-tools-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions_tools',
+          filter: `organisation_id=eq.${organisation.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["subscriptions-vendors"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(vendorsChannel);
+      supabase.removeChannel(toolsChannel);
+    };
+  }, [organisation?.id, queryClient]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
