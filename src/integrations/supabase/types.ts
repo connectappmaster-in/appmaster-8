@@ -1019,6 +1019,36 @@ export type Database = {
           },
         ]
       }
+      currencies: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          symbol: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          symbol: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
       depreciation_entries: {
         Row: {
           asset_id: number
