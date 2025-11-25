@@ -90,15 +90,16 @@ const AssetsList = () => {
 
   const handleExport = () => {
     // Convert to CSV
-    const headers = ["Asset Name", "Type", "Status", "Purchase Date", "Purchase Price", "Current Value", "Depreciation"];
+    const headers = ["Asset ID", "Brand", "Model", "Description", "Serial No", "Category", "Status", "Assigned To"];
     const csvData = filteredAssets.map((asset) => [
-      asset.brand && asset.model ? `${asset.brand} ${asset.model}` : asset.name,
-      asset.category || asset.type,
-      asset.status,
-      asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString('en-GB') : "",
-      asset.cost || asset.purchase_price || "",
-      asset.book_value || asset.cost || "",
-      asset.accumulated_depreciation || "",
+      asset.asset_id || "",
+      asset.brand || "",
+      asset.model || "",
+      asset.description || "",
+      asset.serial_number || "",
+      asset.category || "",
+      asset.status || "",
+      asset.assigned_to || "",
     ]);
 
     const csv = [headers, ...csvData].map((row) => row.join(",")).join("\n");
@@ -186,26 +187,27 @@ const AssetsList = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ASSET NAME</TableHead>
-                <TableHead>TYPE</TableHead>
+                <TableHead>ASSET ID</TableHead>
+                <TableHead>BRAND</TableHead>
+                <TableHead>MODEL</TableHead>
+                <TableHead>DESCRIPTION</TableHead>
+                <TableHead>SERIAL NO</TableHead>
+                <TableHead>CATEGORY</TableHead>
                 <TableHead>STATUS</TableHead>
-                <TableHead>PURCHASE DATE</TableHead>
-                <TableHead>PURCHASE PRICE</TableHead>
-                <TableHead>CURRENT VALUE</TableHead>
-                <TableHead>DEPRECIATION</TableHead>
+                <TableHead>ASSIGNED TO</TableHead>
                 <TableHead className="text-right">ACTIONS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     Loading assets...
                   </TableCell>
                 </TableRow>
               ) : filteredAssets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
                     No assets found. Add your first asset to get started.
                   </TableCell>
                 </TableRow>
@@ -217,31 +219,26 @@ const AssetsList = () => {
                     onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}
                   >
                     <TableCell>
-                      <div className="font-medium">
-                        {asset.brand && asset.model ? `${asset.brand} ${asset.model}` : asset.name}
-                      </div>
+                      <div className="font-medium">{asset.asset_id || '—'}</div>
                     </TableCell>
+                    <TableCell>{asset.brand || '—'}</TableCell>
+                    <TableCell>{asset.model || '—'}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {asset.description || '—'}
+                    </TableCell>
+                    <TableCell>{asset.serial_number || '—'}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{asset.category || asset.type}</Badge>
+                      <Badge variant="secondary">{asset.category || '—'}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge 
                         variant={asset.status === 'available' ? 'default' : 'secondary'}
                         className={asset.status === 'available' ? 'bg-green-500 text-white' : ''}
                       >
-                        {asset.status === 'available' ? 'Active' : asset.status}
+                        {asset.status || 'available'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString('en-GB', { 
-                        day: '2-digit', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      }).replace(/ /g, ' ') : "—"}
-                    </TableCell>
-                    <TableCell>₹{asset.cost?.toLocaleString('en-IN') || asset.purchase_price?.toLocaleString('en-IN') || "—"}</TableCell>
-                    <TableCell>₹{asset.book_value?.toLocaleString('en-IN') || asset.cost?.toLocaleString('en-IN') || "—"}</TableCell>
-                    <TableCell>{asset.accumulated_depreciation ? `₹${asset.accumulated_depreciation.toLocaleString('en-IN')}` : "—"}</TableCell>
+                    <TableCell>{asset.assigned_to || '—'}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
