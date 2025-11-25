@@ -38,7 +38,7 @@ export default function HelpdeskAssets() {
       const tenantId = profileData?.tenant_id || 1;
       const orgId = userData?.organisation_id;
 
-      let query = supabase.from("assets").select("*");
+      let query = supabase.from("itam_assets").select("*").eq("is_deleted", false);
 
       if (orgId) {
         query = query.eq("organisation_id", orgId);
@@ -88,8 +88,8 @@ export default function HelpdeskAssets() {
     },
   });
 
-  const activeAssets = allAssets.filter(a => a.status === 'active');
-  const maintenanceAssets = allAssets.filter(a => a.status === 'maintenance');
+  const availableAssets = allAssets.filter(a => a.status === 'available');
+  const maintenanceAssets = allAssets.filter(a => a.status === 'in_repair');
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,9 +118,9 @@ export default function HelpdeskAssets() {
               </TabsTrigger>
               <TabsTrigger value="available" className="gap-1.5 px-3 text-sm h-7">
                 Available
-                {activeAssets.length > 0 && (
+                {availableAssets.length > 0 && (
                   <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 py-0">
-                    {activeAssets.length}
+                    {availableAssets.length}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -156,9 +156,11 @@ export default function HelpdeskAssets() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                      <SelectItem value="available">Available</SelectItem>
+                      <SelectItem value="assigned">Assigned</SelectItem>
+                      <SelectItem value="in_repair">In Repair</SelectItem>
                       <SelectItem value="retired">Retired</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
                       <SelectItem value="disposed">Disposed</SelectItem>
                     </SelectContent>
                   </Select>
@@ -172,9 +174,16 @@ export default function HelpdeskAssets() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="hardware">Hardware</SelectItem>
-                      <SelectItem value="software">Software</SelectItem>
-                      <SelectItem value="equipment">Equipment</SelectItem>
+                      <SelectItem value="Laptop">Laptop</SelectItem>
+                      <SelectItem value="Desktop">Desktop</SelectItem>
+                      <SelectItem value="Monitor">Monitor</SelectItem>
+                      <SelectItem value="Printer">Printer</SelectItem>
+                      <SelectItem value="Phone">Phone</SelectItem>
+                      <SelectItem value="Tablet">Tablet</SelectItem>
+                      <SelectItem value="Server">Server</SelectItem>
+                      <SelectItem value="Network Device">Network Device</SelectItem>
+                      <SelectItem value="Furniture">Furniture</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -206,12 +215,12 @@ export default function HelpdeskAssets() {
 
           {/* Available Assets Tab */}
           <TabsContent value="available" className="space-y-2 mt-2">
-            <AssetsList status="active" filters={filters} />
+            <AssetsList status="available" filters={filters} />
           </TabsContent>
 
           {/* Maintenance Assets Tab */}
           <TabsContent value="maintenance" className="space-y-2 mt-2">
-            <AssetsList status="maintenance" filters={filters} />
+            <AssetsList status="in_repair" filters={filters} />
           </TabsContent>
         </Tabs>
       </div>
