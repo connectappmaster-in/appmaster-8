@@ -44,6 +44,7 @@ const assetSchema = z.object({
   location: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   department: z.string().optional(),
+  photo_url: z.string().optional(),
 });
 
 interface CreateAssetDialogProps {
@@ -71,6 +72,7 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
       location: "",
       category: "",
       department: "",
+      photo_url: "",
     },
   });
 
@@ -112,6 +114,7 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
         location: values.location || null,
         category: values.category,
         department: values.department || null,
+        photo_url: values.photo_url || null,
         status: "available",
         created_by: userData?.id,
         organisation_id: userData?.organisation_id,
@@ -155,11 +158,11 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Basic Info Section */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Basic Info</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Basic Info</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="asset_id"
@@ -234,8 +237,8 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
 
             {/* Purchase Section */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Purchase</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Purchase</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="purchase_date"
@@ -296,8 +299,8 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
 
             {/* Classification Section */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Classification</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Classification</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="classification"
@@ -325,8 +328,8 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
 
             {/* Organization Section */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Organization</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Organization</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="site"
@@ -401,7 +404,29 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            {/* Photo Section */}
+            <div>
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Photo (Optional)</h3>
+              <FormField
+                control={form.control}
+                name="photo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Add Image</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="text" 
+                        placeholder="Enter image URL or upload to storage" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t">
               <Button
                 type="button"
                 variant="outline"
