@@ -82,138 +82,132 @@ const AssetDetail = () => {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <BackButton />
-      
-      <div className="max-w-7xl mx-auto space-y-6 pt-6">
-        {/* Top Section */}
+      <div className="max-w-7xl mx-auto space-y-4">
+        {/* Header with Back Button */}
+        <div className="flex items-center gap-4">
+          <BackButton />
+          <div>
+            <h1 className="text-xl font-bold">Asset View</h1>
+            <p className="text-sm text-muted-foreground">{asset.category || 'Asset'}</p>
+          </div>
+        </div>
+
+        {/* Top Section with Photo and Details */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-6">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Asset Photo */}
-              <div className="flex-shrink-0">
-                {asset.photo_url ? (
-                  <img 
-                    src={asset.photo_url} 
-                    alt={asset.name}
-                    className="h-48 w-48 object-cover rounded-lg border"
-                  />
-                ) : (
-                  <div className="h-48 w-48 bg-muted rounded-lg flex items-center justify-center">
-                    <span className="text-muted-foreground">No Photo</span>
-                  </div>
-                )}
+              <div className="lg:col-span-1">
+                <div className="aspect-square rounded-lg border bg-muted flex items-center justify-center overflow-hidden">
+                  {asset.photo_url ? (
+                    <img src={asset.photo_url} alt={asset.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-4">
+                      <div className="text-6xl mb-2">📦</div>
+                      <p className="text-sm text-muted-foreground">No photo available</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Asset Info */}
-              <div className="flex-1 space-y-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold">{asset.asset_id}</h1>
-                    <Badge variant={getStatusColor(asset.status)}>{asset.status}</Badge>
+              {/* Asset Details Grid */}
+              <div className="lg:col-span-2">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Asset Tag ID</p>
+                    <p className="text-base font-medium text-primary hover:underline cursor-pointer">{asset.asset_id || '—'}</p>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Purchase Date</p>
-                      <p className="font-medium">
-                        {asset.purchase_date ? format(new Date(asset.purchase_date), "dd/MM/yyyy") : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Cost</p>
-                      <p className="font-medium">₹{asset.cost || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Brand</p>
-                      <p className="font-medium">{asset.brand || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Model</p>
-                      <p className="font-medium">{asset.model || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Category</p>
-                      <p className="font-medium">{asset.category || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Department</p>
-                      <p className="font-medium">{asset.department || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Site</p>
-                      <p className="font-medium">{asset.site || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Location</p>
-                      <p className="font-medium">{asset.location || "N/A"}</p>
-                    </div>
-                    {asset.assigned_to && (
-                      <>
-                        <div>
-                          <p className="text-muted-foreground">Assigned To</p>
-                          <p className="font-medium">{asset.assigned_to}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Status</p>
-                          <Badge variant="secondary">Checked Out</Badge>
-                        </div>
-                      </>
-                    )}
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Site</p>
+                    <p className="text-base text-primary hover:underline cursor-pointer">{asset.site || '—'}</p>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={handlePrint}>
-                    <Printer className="h-4 w-4 mr-2" />
-                    PRINT
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/helpdesk/assets/edit/${asset.id}`)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    EDIT
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <MoreVertical className="h-4 w-4 mr-2" />
-                        MORE ACTIONS
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {asset.status === "available" && (
-                        <DropdownMenuItem onClick={() => navigate(`/helpdesk/assets/assign?assetId=${asset.id}`)}>
-                          <UserCheck className="h-4 w-4 mr-2" />
-                          Check-out
-                        </DropdownMenuItem>
-                      )}
-                      {asset.status === "assigned" && (
-                        <DropdownMenuItem onClick={() => navigate(`/helpdesk/assets/return?assetId=${asset.id}`)}>
-                          <Archive className="h-4 w-4 mr-2" />
-                          Check-in
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onClick={() => navigate(`/helpdesk/assets/repairs/create?assetId=${asset.id}`)}>
-                        <Wrench className="h-4 w-4 mr-2" />
-                        Maintenance
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {}}>
-                        Reserve
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {}}>
-                        Upload Docs
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {}}>
-                        Link Assets
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {}}>
-                        Dispose
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Purchase Date</p>
+                    <p className="text-base">{asset.purchase_date ? format(new Date(asset.purchase_date), "dd/MM/yyyy") : '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Location</p>
+                    <p className="text-base">{asset.location || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Cost</p>
+                    <p className="text-base font-semibold">₹{asset.cost?.toLocaleString() || '0.00'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Category</p>
+                    <p className="text-base">{asset.category || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Brand</p>
+                    <p className="text-base">{asset.brand || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Department</p>
+                    <p className="text-base">{asset.department || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Model</p>
+                    <p className="text-base">{asset.model || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Assigned to</p>
+                    <p className="text-base text-primary hover:underline cursor-pointer">{asset.assigned_to || '—'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm font-semibold text-muted-foreground mb-1">Status</p>
+                    <Badge variant="outline" className={`${getStatusColor(asset.status) === 'default' ? 'bg-green-100 text-green-800' : ''} capitalize`}>
+                      {asset.status === 'assigned' ? 'Checked out' : asset.status || 'available'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Action Buttons Row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-2" />
+            PRINT
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/helpdesk/assets/edit/${asset.id}`)}>
+            <Edit className="h-4 w-4 mr-2" />
+            EDIT ASSET
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="sm">
+                MORE ACTIONS
+                <MoreVertical className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              {asset.status === "available" && (
+                <DropdownMenuItem onClick={() => navigate(`/helpdesk/assets/assign?assetId=${asset.id}`)}>
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Check-out
+                </DropdownMenuItem>
+              )}
+              {asset.status === "assigned" && (
+                <DropdownMenuItem onClick={() => navigate(`/helpdesk/assets/return?assetId=${asset.id}`)}>
+                  <Archive className="h-4 w-4 mr-2" />
+                  Check-in
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => {}}>
+                Dispose
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/helpdesk/assets/repairs/create?assetId=${asset.id}`)}>
+                <Wrench className="h-4 w-4 mr-2" />
+                Maintenance
+              </DropdownMenuItem>
+              <DropdownMenuItem>Reserve</DropdownMenuItem>
+              <DropdownMenuItem>Upload Docs</DropdownMenuItem>
+              <DropdownMenuItem>Link Assets</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Tabs Section */}
         <Tabs defaultValue="details" className="w-full">

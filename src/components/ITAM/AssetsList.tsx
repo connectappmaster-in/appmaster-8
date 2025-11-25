@@ -174,7 +174,10 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditAsset(asset)}>
+                      <DropdownMenuItem onClick={() => {
+                        const navigate = (window as any).navigate || (() => {});
+                        window.location.href = `/helpdesk/assets/detail/${asset.id}`;
+                      }}>
                         <Eye className="mr-2 h-4 w-4" />
                         View
                       </DropdownMenuItem>
