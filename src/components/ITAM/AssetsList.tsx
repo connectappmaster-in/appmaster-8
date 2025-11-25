@@ -56,7 +56,7 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
         query = query.eq("tenant_id", tenantId);
       }
 
-      if (status) {
+      if (status && status !== "all") {
         query = query.eq("status", status);
       }
 
