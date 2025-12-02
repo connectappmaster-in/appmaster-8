@@ -1,17 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Eye, Edit, UserPlus, MoreHorizontal } from "lucide-react";
+import { Package, MoreHorizontal, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EditAssetDialog } from "./EditAssetDialog";
 import { AssignAssetDialog } from "./AssignAssetDialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface AssetsListProps {
   status?: string;
   filters?: Record<string, any>;
+  onSelectionChange?: (selectedIds: number[], bulkActions: BulkActions) => void;
+}
+
+interface BulkActions {
+  handleCheckOut: () => void;
+  handleCheckIn: () => void;
+  handleMaintenance: () => void;
+  handleDispose: () => void;
+  handleDelete: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -23,9 +36,144 @@ const statusColors: Record<string, string> = {
   disposed: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
+type SortColumn = 'asset_id' | 'brand' | 'model' | 'description' | 'serial_number' | 'category' | 'status' | 'assigned_to';
+type SortDirection = 'asc' | 'desc' | null;
+
+export const AssetsList = ({ status, filters = {}, onSelectionChange }: AssetsListProps) => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [editAsset, setEditAsset] = useState<any>(null);
   const [assignAsset, setAssignAsset] = useState<any>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [deleteAssetId, setDeleteAssetId] = useState<number | null>(null);
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortColumn(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />;
+    }
+    if (sortDirection === 'asc') {
+      return <ChevronUp className="ml-1 h-3 w-3" />;
+    }
+    return <ChevronDown className="ml-1 h-3 w-3" />;
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const newSelection = filteredAssets.map((asset: any) => asset.id);
+      setSelectedAssets(newSelection);
+      notifyParent(newSelection);
+    } else {
+      setSelectedAssets([]);
+      notifyParent([]);
+    }
+  };
+
+  const handleSelectAsset = (assetId: number, checked: boolean) => {
+    let newSelection: number[];
+    if (checked) {
+      newSelection = [...selectedAssets, assetId];
+    } else {
+      newSelection = selectedAssets.filter(id => id !== assetId);
+    }
+    setSelectedAssets(newSelection);
+    notifyParent(newSelection);
+  };
+
+  const notifyParent = (selectedIds: number[]) => {
+    if (onSelectionChange) {
+      onSelectionChange(selectedIds, {
+        handleCheckOut: handleBulkCheckOut,
+        handleCheckIn: handleBulkCheckIn,
+        handleMaintenance: handleBulkMaintenance,
+        handleDispose: handleBulkDispose,
+        handleDelete: handleBulkDelete,
+      });
+    }
+  };
+
+  const handleBulkCheckOut = async () => {
+    toast.success(`Checking out ${selectedAssets.length} asset(s)`);
+    setSelectedAssets([]);
+  };
+
+  const handleBulkCheckIn = async () => {
+    toast.success(`Checking in ${selectedAssets.length} asset(s)`);
+    setSelectedAssets([]);
+  };
+
+  const handleBulkMaintenance = async () => {
+    try {
+      const { error } = await supabase
+        .from('itam_assets')
+        .update({ status: 'in_repair' })
+        .in('id', selectedAssets);
+
+      if (error) throw error;
+      
+      toast.success(`${selectedAssets.length} asset(s) marked for maintenance`);
+      setSelectedAssets([]);
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+    } catch (error: any) {
+      toast.error("Failed to update assets: " + error.message);
+    }
+  };
+
+  const handleBulkDispose = async () => {
+    try {
+      const { error } = await supabase
+        .from('itam_assets')
+        .update({ status: 'disposed' })
+        .in('id', selectedAssets);
+
+      if (error) throw error;
+      
+      toast.success(`${selectedAssets.length} asset(s) marked as disposed`);
+      setSelectedAssets([]);
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+    } catch (error: any) {
+      toast.error("Failed to update assets: " + error.message);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleteConfirmOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('itam_assets')
+        .update({ is_deleted: true })
+        .in('id', selectedAssets);
+
+      if (error) throw error;
+      
+      toast.success(`${selectedAssets.length} asset(s) deleted`);
+      setSelectedAssets([]);
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      queryClient.invalidateQueries({ queryKey: ["assets-count"] });
+    } catch (error: any) {
+      toast.error("Failed to delete assets: " + error.message);
+    }
+  };
 
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ["assets", status, filters],
@@ -67,7 +215,7 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
   });
 
   // Client-side filtering
-  const filteredAssets = assets.filter((asset: any) => {
+  let filteredAssets = assets.filter((asset: any) => {
     if (filters.status && asset.status !== filters.status) return false;
     if (filters.type && asset.category !== filters.type) return false;
     if (filters.search) {
@@ -81,6 +229,17 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
     }
     return true;
   });
+
+  // Apply sorting
+  if (sortColumn && sortDirection) {
+    filteredAssets = [...filteredAssets].sort((a, b) => {
+      const aVal = a[sortColumn] || '';
+      const bVal = b[sortColumn] || '';
+      
+      const comparison = aVal.toString().localeCompare(bVal.toString(), undefined, { numeric: true });
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
 
   if (isLoading) {
     return (
@@ -115,43 +274,138 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs font-medium h-9">ASSET ID</TableHead>
-              <TableHead className="text-xs font-medium h-9">BRAND</TableHead>
-              <TableHead className="text-xs font-medium h-9">MODEL</TableHead>
-              <TableHead className="text-xs font-medium h-9">DESCRIPTION</TableHead>
-              <TableHead className="text-xs font-medium h-9">SERIAL NO</TableHead>
-              <TableHead className="text-xs font-medium h-9">CATEGORY</TableHead>
-              <TableHead className="text-xs font-medium h-9">STATUS</TableHead>
-              <TableHead className="text-xs font-medium h-9">ASSIGNED TO</TableHead>
+              <TableHead className="w-12">
+                <Checkbox 
+                  checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('asset_id')}
+                >
+                  ASSET ID
+                  {getSortIcon('asset_id')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('brand')}
+                >
+                  MAKE
+                  {getSortIcon('brand')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('model')}
+                >
+                  MODEL
+                  {getSortIcon('model')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('description')}
+                >
+                  DESCRIPTION
+                  {getSortIcon('description')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('serial_number')}
+                >
+                  SERIAL NO
+                  {getSortIcon('serial_number')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('category')}
+                >
+                  CATEGORY
+                  {getSortIcon('category')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('status')}
+                >
+                  STATUS
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-xs font-medium h-9">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 -ml-2 hover:bg-muted group"
+                  onClick={() => handleSort('assigned_to')}
+                >
+                  ASSIGNED TO
+                  {getSortIcon('assigned_to')}
+                </Button>
+              </TableHead>
               <TableHead className="text-xs font-medium h-9 text-right">ACTIONS</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAssets.map((asset: any) => (
-              <TableRow key={asset.id} className="cursor-pointer hover:bg-muted/50">
-                <TableCell className="py-2">
+          {filteredAssets.map((asset: any) => (
+              <TableRow 
+                key={asset.id} 
+                className="cursor-pointer hover:bg-muted/50"
+              >
+                <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox 
+                    checked={selectedAssets.includes(asset.id)}
+                    onCheckedChange={(checked) => handleSelectAsset(asset.id, checked as boolean)}
+                  />
+                </TableCell>
+                <TableCell className="py-2" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   <div className="font-medium text-sm">{asset.asset_id || '—'}</div>
                 </TableCell>
-                <TableCell className="py-2 text-sm">
+                <TableCell className="py-2 text-sm" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   {asset.brand || '—'}
                 </TableCell>
-                <TableCell className="py-2 text-sm">
+                <TableCell className="py-2 text-sm" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   {asset.model || '—'}
                 </TableCell>
-                <TableCell className="py-2 text-sm text-muted-foreground max-w-[200px] truncate">
+                <TableCell className="py-2 text-sm text-muted-foreground max-w-[200px] truncate" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   {asset.description || '—'}
                 </TableCell>
-                <TableCell className="py-2 text-sm">
+                <TableCell className="py-2 text-sm" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   {asset.serial_number || '—'}
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   {asset.category && (
                     <Badge variant="outline" className="text-xs capitalize">
                       {asset.category}
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   <Badge 
                     variant="outline" 
                     className={`text-xs capitalize ${statusColors[asset.status || "available"]}`}
@@ -159,7 +413,7 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
                     {asset.status || 'available'}
                   </Badge>
                 </TableCell>
-                <TableCell className="py-2 text-sm">
+                <TableCell className="py-2 text-sm" onClick={() => navigate(`/helpdesk/assets/detail/${asset.id}`)}>
                   {asset.assigned_to || '—'}
                 </TableCell>
                 <TableCell className="text-right py-2">
@@ -169,42 +423,114 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
                         variant="ghost"
                         size="sm"
                         className="h-7 w-7 p-0"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <MoreHorizontal className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        const navigate = (window as any).navigate || (() => {});
-                        window.location.href = `/helpdesk/assets/detail/${asset.id}`;
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/helpdesk/assets/detail/${asset.id}`);
                       }}>
-                        <Eye className="mr-2 h-4 w-4" />
                         View
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setEditAsset(asset)}>
-                        <Edit className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        setEditAsset(asset);
+                      }}>
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setAssignAsset(asset)}>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Check In
+                      {asset.status === 'available' && (
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setAssignAsset(asset);
+                        }}>
+                          Check Out
+                        </DropdownMenuItem>
+                      )}
+                      {asset.status === 'assigned' && (
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setAssignAsset(asset);
+                        }}>
+                          Check In
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const { error } = await supabase
+                            .from('itam_assets')
+                            .update({ status: 'lost' })
+                            .eq('id', asset.id);
+                          if (error) throw error;
+                          toast.success('Asset marked as lost');
+                          queryClient.invalidateQueries({ queryKey: ["assets"] });
+                        } catch (error: any) {
+                          toast.error("Failed to update asset: " + error.message);
+                        }
+                      }}>
+                        Lost
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        Lost / Missing
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const { error } = await supabase
+                            .from('itam_assets')
+                            .update({ status: 'in_repair' })
+                            .eq('id', asset.id);
+                          if (error) throw error;
+                          toast.success('Asset marked for repair');
+                          queryClient.invalidateQueries({ queryKey: ["assets"] });
+                        } catch (error: any) {
+                          toast.error("Failed to update asset: " + error.message);
+                        }
+                      }}>
                         Repair
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const { error } = await supabase
+                            .from('itam_assets')
+                            .update({ status: 'retired' })
+                            .eq('id', asset.id);
+                          if (error) throw error;
+                          toast.success('Asset marked as broken');
+                          queryClient.invalidateQueries({ queryKey: ["assets"] });
+                        } catch (error: any) {
+                          toast.error("Failed to update asset: " + error.message);
+                        }
+                      }}>
                         Broken
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const { error } = await supabase
+                            .from('itam_assets')
+                            .update({ status: 'disposed' })
+                            .eq('id', asset.id);
+                          if (error) throw error;
+                          toast.success('Asset disposed');
+                          queryClient.invalidateQueries({ queryKey: ["assets"] });
+                        } catch (error: any) {
+                          toast.error("Failed to update asset: " + error.message);
+                        }
+                      }}>
                         Dispose
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        toast.info('Replicate feature coming soon');
+                      }}>
                         Replicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem className="text-destructive" onClick={async (e) => {
+                        e.stopPropagation();
+                        setDeleteAssetId(asset.id);
+                      }}>
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -231,6 +557,44 @@ export const AssetsList = ({ status, filters = {} }: AssetsListProps) => {
           onOpenChange={(open) => !open && setAssignAsset(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={bulkDeleteConfirmOpen}
+        onOpenChange={setBulkDeleteConfirmOpen}
+        onConfirm={() => {
+          confirmBulkDelete();
+          setBulkDeleteConfirmOpen(false);
+        }}
+        title="Delete Assets"
+        description={`Are you sure you want to delete ${selectedAssets.length} asset(s)? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={deleteAssetId !== null}
+        onOpenChange={(open) => !open && setDeleteAssetId(null)}
+        onConfirm={async () => {
+          if (deleteAssetId === null) return;
+          try {
+            const { error } = await supabase
+              .from('itam_assets')
+              .update({ is_deleted: true })
+              .eq('id', deleteAssetId);
+            if (error) throw error;
+            toast.success('Asset deleted');
+            queryClient.invalidateQueries({ queryKey: ["assets"] });
+            queryClient.invalidateQueries({ queryKey: ["assets-count"] });
+          } catch (error: any) {
+            toast.error("Failed to delete asset: " + error.message);
+          }
+          setDeleteAssetId(null);
+        }}
+        title="Delete Asset"
+        description="Are you sure you want to delete this asset? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
     </>
   );
 };

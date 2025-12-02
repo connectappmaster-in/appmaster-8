@@ -27,7 +27,21 @@ import HelpdeskTickets from "./pages/helpdesk/tickets/index";
 import TicketDetail from "./pages/helpdesk/tickets/[id]";
 import NewTicket from "./pages/helpdesk/new";
 import HelpdeskAssets from "./pages/helpdesk/assets";
-import HelpdeskKB from "./pages/helpdesk/kb";
+import AssetDetail from "./pages/helpdesk/assets/detail/[assetId]";
+import AssetReports from "./pages/helpdesk/assets/reports";
+import AllAssets from "./pages/helpdesk/assets/allassets";
+import AssetSetup from "./pages/helpdesk/assets/setup";
+import DepreciationDashboard from "./pages/helpdesk/assets/depreciation/index";
+import VendorsList from "./pages/helpdesk/assets/vendors/index";
+import LicensesList from "./pages/helpdesk/assets/licenses/index";
+import RepairsList from "./pages/helpdesk/assets/repairs/index";
+import CreateRepair from "./pages/helpdesk/assets/repairs/create";
+import RepairDetail from "./pages/helpdesk/assets/repairs/detail/[repairId]";
+// Assets Explore imports
+import AssetsBulkActions from "./pages/helpdesk/assets/explore/bulk-actions";
+import AssetsReports from "./pages/helpdesk/assets/explore/reports";
+import AssetsTools from "./pages/helpdesk/assets/tools";
+import AssetsFieldsSetup from "./pages/helpdesk/assets/setup/fields-setup";
 import HelpdeskProblemDetail from "./pages/helpdesk/problems/[id]";
 import HelpdeskChanges from "./pages/helpdesk/changes";
 import HelpdeskAutomation from "./pages/helpdesk/automation";
@@ -42,24 +56,12 @@ import HelpdeskSettings from "./pages/helpdesk/settings";
 import HelpdeskQueues from "./pages/helpdesk/queues";
 import HelpdeskSLA from "./pages/helpdesk/sla";
 import HelpdeskReports from "./pages/helpdesk/reports";
-import HelpdeskSRM from "./pages/helpdesk/srm/index";
 import HelpdeskMonitoring from "./pages/helpdesk/monitoring";
 import HelpdeskSystemUpdates from "./pages/helpdesk/system-updates";
+import SystemUpdatesSettings from "./pages/helpdesk/system-updates/settings";
+import SystemUpdatesDevices from "./pages/helpdesk/system-updates/devices";
+import SystemUpdatesUpdates from "./pages/helpdesk/system-updates/updates";
 import HelpdeskAudit from "./pages/helpdesk/audit";
-// Service Requests imports
-import ServiceRequestsIndex from "./pages/helpdesk/service-requests/index";
-import ServiceRequestForm from "./pages/helpdesk/service-requests/request-form";
-import ServiceRequestDetail from "./pages/helpdesk/service-requests/detail/[requestId]";
-import ServiceRequestApprovals from "./pages/helpdesk/service-requests/approvals";
-import ServiceRequestAssignmentRules from "./pages/helpdesk/service-requests/assignment-rules";
-import ServiceRequestSLAPolicies from "./pages/helpdesk/service-requests/sla-policies";
-import ServiceRequestReports from "./pages/helpdesk/service-requests/reports";
-import ServiceRequestMyRequests from "./pages/helpdesk/service-requests/my-requests";
-import ChangeManagementIndex from "./pages/helpdesk/service-requests/change-management/index";
-import ChangeManagementDetail from "./pages/helpdesk/service-requests/change-management/detail/[changeId]";
-import ChangeManagementCalendar from "./pages/helpdesk/service-requests/change-management/calendar";
-import ChangeManagementApprovals from "./pages/helpdesk/service-requests/change-management/approvals";
-
 import Assets from "./pages/assets";
 import ShopIncomeExpense from "./pages/shop-income-expense";
 import CRM from "./pages/crm";
@@ -74,7 +76,6 @@ import ReportIssue from "./pages/ReportIssue";
 import Admin from "./pages/admin/index";
 import Login from "./pages/Login";
 import AuthConfirm from "./pages/AuthConfirm";
-
 import Profile from "./pages/Profile";
 import InitializeAdmin from "./pages/InitializeAdmin";
 import PasswordReset from "./pages/PasswordReset";
@@ -100,22 +101,17 @@ import SuperAdminTools from "./pages/super-admin/tools";
 import { BroadcastBanner } from "./components/BroadcastBanner";
 import AppDetailPage from "./pages/apps/[slug]";
 import Notifications from "./pages/Notifications";
-import SRM from "./pages/srm/index";
-import RequestDetail from "./pages/srm/RequestDetail";
 import ITAM from "./pages/itam/index";
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      retry: 1,
-    },
-  },
+      retry: 1
+    }
+  }
 });
-
 const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
+  return <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -157,29 +153,23 @@ const App = () => {
           
           {/* Helpdesk Routes - All under /helpdesk */}
           <Route path="/helpdesk" element={<ToolAccessGuard toolKey="helpdesk"><HelpdeskLayout /></ToolAccessGuard>}>
-            <Route index element={<HelpdeskDashboard />} />
+            
             <Route path="tickets" element={<HelpdeskTickets />} />
             <Route path="tickets/:id" element={<TicketDetail />} />
             <Route path="new" element={<NewTicket />} />
-            <Route path="srm" element={<HelpdeskSRM />} />
-            
-            {/* Service Requests Routes */}
-            <Route path="service-requests" element={<ServiceRequestsIndex />} />
-            <Route path="service-requests/request-form" element={<ServiceRequestForm />} />
-            <Route path="service-requests/detail/:requestId" element={<ServiceRequestDetail />} />
-            <Route path="service-requests/approvals" element={<ServiceRequestApprovals />} />
-            <Route path="service-requests/assignment-rules" element={<ServiceRequestAssignmentRules />} />
-            <Route path="service-requests/sla-policies" element={<ServiceRequestSLAPolicies />} />
-            <Route path="service-requests/reports" element={<ServiceRequestReports />} />
-            <Route path="service-requests/my-requests" element={<ServiceRequestMyRequests />} />
-            
-            {/* Change Management Routes */}
-            <Route path="service-requests/change-management" element={<ChangeManagementIndex />} />
-            <Route path="service-requests/change-management/detail/:changeId" element={<ChangeManagementDetail />} />
-            <Route path="service-requests/change-management/calendar" element={<ChangeManagementCalendar />} />
-            <Route path="service-requests/change-management/approvals" element={<ChangeManagementApprovals />} />
-            
             <Route path="assets" element={<HelpdeskAssets />} />
+            <Route path="assets/allassets" element={<AllAssets />} />
+            <Route path="assets/detail/:assetId" element={<AssetDetail />} />
+            <Route path="assets/reports" element={<AssetReports />} />
+            <Route path="assets/tools" element={<AssetsTools />} />
+            <Route path="assets/setup" element={<AssetSetup />} />
+            <Route path="assets/depreciation" element={<DepreciationDashboard />} />
+            <Route path="assets/vendors" element={<VendorsList />} />
+            <Route path="assets/licenses" element={<LicensesList />} />
+            <Route path="assets/repairs" element={<RepairsList />} />
+            <Route path="assets/repairs/create" element={<CreateRepair />} />
+            <Route path="assets/repairs/detail/:repairId" element={<RepairDetail />} />
+            <Route path="assets/setup/fields-setup" element={<AssetsFieldsSetup />} />
             <Route path="subscription" element={<HelpdeskSubscriptionLayout />}>
               <Route index element={<HelpdeskSubscriptionDashboard />} />
               <Route path="tools" element={<HelpdeskSubscriptionTools />} />
@@ -188,7 +178,9 @@ const App = () => {
               <Route path="payments" element={<HelpdeskSubscriptionPayments />} />
             </Route>
             <Route path="system-updates" element={<HelpdeskSystemUpdates />} />
-            <Route path="kb" element={<HelpdeskKB />} />
+            <Route path="system-updates/settings" element={<SystemUpdatesSettings />} />
+            <Route path="system-updates/devices" element={<SystemUpdatesDevices />} />
+            <Route path="system-updates/updates" element={<SystemUpdatesUpdates />} />
             <Route path="monitoring" element={<HelpdeskMonitoring />} />
             <Route path="reports" element={<HelpdeskReports />} />
             <Route path="audit" element={<HelpdeskAudit />} />
@@ -202,8 +194,6 @@ const App = () => {
             <Route path="sla" element={<HelpdeskSLA />} />
           </Route>
           
-          <Route path="/srm" element={<ToolAccessGuard toolKey="srm"><SRM /></ToolAccessGuard>} />
-          <Route path="/srm/request/:requestId" element={<ToolAccessGuard toolKey="srm"><RequestDetail /></ToolAccessGuard>} />
           <Route path="/itam" element={<ToolAccessGuard toolKey="itam"><ITAM /></ToolAccessGuard>} />
           <Route path="/assets" element={<ToolAccessGuard toolKey="assets"><Assets /></ToolAccessGuard>} />
           <Route path="/shop-income-expense" element={<ShopIncomeExpense />} />
@@ -243,8 +233,6 @@ const App = () => {
           </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
-  );
+  </QueryClientProvider>;
 };
-
 export default App;
